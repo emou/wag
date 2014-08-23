@@ -67,6 +67,15 @@ Run with application defaults:
 Application defaults are supplied by environment-based configuration
 found within `./resources-dev/config.clj`.
 
+## Compiling ClojureScript
+
+The easiest way in development mode is to run the ClojureScript compier in the
+`auto` mode:
+
+```
+lein cljsbuild auto dev
+```
+
 ## License
 
 Copyright © 2014 Emil Stanchev
