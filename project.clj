@@ -1,6 +1,6 @@
-(defproject wag "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject wag "0.1.0"
+  :description "Word Association Game: A port from real life to clojure and the web"
+  :url "http://github.com/emou/wag"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :main wag.main
