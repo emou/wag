@@ -15,4 +15,6 @@
                  [ring-server "0.2.8"]
                  [http-kit "2.1.5"]
                  [clj-wamp "1.0.0-rc1"]]
+  :plugins [[cider/cider-nrepl "0.7.0"]
+            [org.clojure/tools.nrepl "0.2.4"]]
   :profiles {:dev {:resource-paths ["resources-dev"]}})
