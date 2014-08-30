@@ -37,6 +37,8 @@
 <script src="//autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
 <script src="/js/app.js"></script>
 <script>
+  wag.core.init();
+
   $('#login-form').submit(function() {
     var WS_URI = 'ws://localhost:8080/ws';
     var BASE_TOPIC_URI = "http://wag/";
