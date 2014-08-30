@@ -5,12 +5,16 @@
                          [session :only [wrap-session]])
         [wag.websocket :only [wamp-handler]])
   (:require [compojure.route :as route]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [cemerick.austin.repls :refer (browser-connected-repl-js)]))
 
-;; define mapping here
-(defroutes app-routes
+(println (browser-connected-repl-js))
+
+(defroutes app-routes*
   (GET "/ws" [:as req] (wamp-handler req))
-  ;; static files under ./resources/public folder
+  ;; If there's no REPL running, return empty string;
+  ;; otherwise return code that connects to the running REPL.
+  (GET "/browser-connected-repl.js" [] (or (browser-connected-repl-js) ""))
   (route/resources "/")
   (route/not-found "<p>Page not found.</p>"))
 
@@ -19,7 +23,6 @@
     (try (handler req)
       (catch Exception e
         (log/error e "error handling request" req)
-        ;; FIXME provide a better page for 500 here
         {:status 500 :body "Sorry, an error occured."}))))
 
 (defn wrap-root-url
@@ -37,7 +40,7 @@
     (log/debug "Processing request " req)
     (handler req)))
 
-(defn app [] (-> app-routes
+(defn app [] (-> #'app-routes*
               wrap-logging
               wrap-session
               wrap-keyword-params

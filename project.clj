@@ -46,4 +46,5 @@
          :output-wrapper false
          :closure-warnings {:non-standard-jsdoc :off}}}]}
 
-  :profiles {:dev {:resource-paths ["resources-dev"]}})
+  :profiles {:dev {:plugins [[com.cemerick/austin "0.1.5"]]
+                   :resource-paths ["resources-dev"]}})

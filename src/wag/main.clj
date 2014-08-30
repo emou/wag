@@ -41,3 +41,17 @@
     ; Shutdown hook
     (. (Runtime/getRuntime) (addShutdownHook (Thread. stop-server)))
     (start-server options)))
+
+(comment
+  ;; 1) $ lein repl
+  ;; 2) Eval this in vim-fireplace
+  ;; 3) Open the app in a browser
+  ;; 4) Open a cljs file
+  ;; 5) :Piggieback (cemerick.austin/repl-env)
+  ;; 6) Eval away in the context of the app!
+  (-main)
+  (def repl-env (reset!
+                  cemerick.austin.repls/browser-repl-env
+                  (cemerick.austin/repl-env)))
+  (cemerick.austin.repls/cljs-repl repl-env)
+  )

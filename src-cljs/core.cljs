@@ -1,6 +1,7 @@
 (ns wag.core
   (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
+            [om.dom :as dom :include-macros true]
+            [clojure.browser.repl]))
 
 (enable-console-print!)
 
@@ -20,3 +21,11 @@
   {:target (. js/document (getElementById "app"))})
 
 (init)
+
+(comment
+  (ns wag.core)
+  (swap! app-state assoc :text ":)")
+  (js/alert "hm!")
+  (println "x!")
+  (map)
+  )
