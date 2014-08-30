@@ -18,7 +18,7 @@
     [clj-wamp "1.0.0-rc1"]
 
     ; Client-side deps
-    [org.clojure/clojurescript "0.0-2197"
+    [org.clojure/clojurescript "0.0-2280"
     :exclusions [org.apache.ant/ant]]
     [om "0.7.1"]
   ]
@@ -30,7 +30,7 @@
      [{:id "dev"
        :source-paths ["src-cljs"]
        :compiler
-        {:optimizations :advanced
+        {:optimizations :none
          :output-to "resources/public/js/app.js"
          :output-dir "resources/public/js/"
          :pretty-print true
@@ -38,8 +38,10 @@
       {:id "release"
        :source-paths ["src-cljs"]
        :compiler
-        {:output-to "resources/public/js/app.js"
-         :optimizations :advanced
+        {:optimizations :advanced
+         :output-to "resources/public/js/app.js"
+         :preamble ["react/react.min.js"]
+         :externs ["react/react.js"]
          :pretty-print false
          :output-wrapper false
          :closure-warnings {:non-standard-jsdoc :off}}}]}
