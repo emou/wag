@@ -27,9 +27,11 @@
   (log/info "WAMP call:" sess-id topic call-id call-params)
   [sess-id topic call-id call-params])
 
+;; TODO: Implement database-backed authentication
+;; Currently all users can login using "password".
 (defn- auth-secret [sess-id auth-key extra]
   "Returns the auth key's secret (ie. password), typically retrieved from a database."
-  "secret-password")
+  "password")
 
 (defn- auth-permissions
   "Returns the permissions for a client session by auth key."
