@@ -22,122 +22,16 @@
 
 </head>
 <body>
-  <div id="wag-main-container" class="container">
-    <form id="login-form" action="#" class="form-signin" role="form">
-      <input id="login-username" type="text" class="form-control" placeholder="Username">
-      <input id="login-password" type="password" class="form-control" placeholder="Password">
-      <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-    </form>
-  </div>
+  <div id="wag-main-container" class="container"></div>
 
-<script src="http://fb.me/react-0.11.1.js"></script>
-<script src="//code.jquery.com/jquery-2.0.0.min.js"></script>
-<script src="//autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
+  <script src="http://fb.me/react-0.11.1.js"></script>
+  <script src="//code.jquery.com/jquery-2.0.0.min.js"></script>
+  <script src="//autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
 
-<!-- 
-This works with { :optimizations :none }.
-TODO: Make it work with for release build ({ :optimizations :advanced }).
--->
-<script src="/js/goog/base.js" type="text/javascript"></script>
-<script src="/js/app.js"></script>
-<script>
-  goog.require('wag.core');
-
-  $('#login-form').submit(function() {
-    var WS_URI = 'ws://localhost:8080/ws';
-    var BASE_TOPIC_URI = "http://wag/";
-    var sess;
-
-    // Connect to WebSocket
-    ab.connect(
-        WS_URI,
-        // Connection callback
-        function (session) {
-            sess = session;
-            console.log("Connected to " + WS_URI, sess.sessionid());
-
-            var username = $('#login-username').val();
-            var password = $('#login-password').val();
-            console.log("username " + username);
-            console.log("password " + password);
-
-            // send authreq rpc call
-            sess.authreq(username).then(
-                function (challenge) {
-                    console.log("Received auth challenge", challenge);
-                    var signature = sess.authsign(password, challenge);
-
-                    // send auth rpc call
-                    sess.auth(signature).then(function(permissions) {
-                        console.log("Authentication complete", permissions);
-
-                        // Add CURI prefixes and Subscribe to chat channel
-                        sess.prefix("event", BASE_TOPIC_URI + "event#");
-                        sess.prefix("rpc",   BASE_TOPIC_URI + "rpc#");
-                        sess.subscribe("event:chat", onChatEvent);
-                    },
-                    function() {
-                      console.log("Authentication failed");
-                    });
-                },
-                function() {
-                  console.log("AuthRequest failed");
-                });
-
-        },
-        // Disconnection callback
-        function (code, reason) {
-            sess = null;
-            if (code != 0) {  // ignore app disconnects
-                console.log("Connection lost (" + reason + ")");
-            }
-        },
-        // Options
-        {'maxRetries': 60, 'retryDelay': 30000}
-    );
-
-    function onChatEvent(topic, event) {
-        console.log("event:chat RECEIVED", event);
-    }
-
-    return false;
-
-    // $('#chat-btn').click(function() {
-    //     sess.publish("event:chat", "foo");
-    // });
-
-    // $('#echo-btn').click(function() {
-    //     sess.call("rpc:echo", 'test').then(
-    //         function (res) { console.log("rpc:echo RECEIVED success", res); },
-    //         function (res) { console.log("rpc:echo RECEIVED error", res); }
-    //     );
-    //     console.log("rpc:echo SENT 'test'");
-    // });
-
-    // $('#throw-btn').click(function() {
-    //     sess.call("rpc:throw").then(
-    //         function (res) { console.log("rpc:throw RECEIVED success", res); },
-    //         function (res) { console.log("rpc:throw RECEIVED error", res); }
-    //     );
-    //     console.log("rpc:throw SENT");
-    // });
-
-    // $('#ping-btn').click(function() {
-    //     sess.call("rpc:ping").then(
-    //         function (res) { console.log("rpc:ping RECEIVED success", res); },
-    //         function (res) { console.log("rpc:ping RECEIVED error", res); }
-    //     );
-    //     console.log("rpc:ping SENT");
-    // });
-
-    // $('#login-form').submit(function(event) {
-    //   console.log(event);
-    //   return false;
-    // });
-  });
-
-</script>
-<script src="/browser-connected-repl.js"></script>
-
+  <script src="/js/goog/base.js"></script>
+  <script src="/js/app.js"></script>
+  <script>goog.require('wag.core');</script>
+  <script>wag.core.init();</script>
+  <script src="/browser-connected-repl.js"></script>
 </body>
 </html>

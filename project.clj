@@ -8,6 +8,8 @@
     [org.clojure/clojure "1.6.0"]
     [org.clojure/tools.cli "0.2.2"]
     [org.clojure/tools.logging "0.2.6"]
+    [org.clojure/core.async "0.1.338.0-5c5012-alpha"]
+
     [log4j "1.2.17" :exclusions [javax.mail/mail
                                 javax.jms/jms
                                 com.sun.jdmk/jmxtools

@@ -1,6 +1,10 @@
 (ns wag.routes
-  (:require [secretary.core :as secretary :include-macros true]))
+  (:require [wag.core]
+            [secretary.core :as secretary :include-macros true]))
 
-(secretary/defroute "/login" [] (do
-                                  (println "login")
-                                  (swap! app-state assoc :text "Login!")))
+(defn init []
+  (secretary/defroute
+    "/login" []
+    (do
+      (println "login route triggered")
+      (swap! wag.core/app-state assoc :text "Logging in ..."))))

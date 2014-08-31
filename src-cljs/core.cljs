@@ -3,29 +3,27 @@
             [om.dom :as dom :include-macros true]
             [secretary.core :as secretary :include-macros true]
             [clojure.browser.repl]
+            [wag.routes :as routes]
             [wag.views :as views]))
-
-(enable-console-print!)
 
 (def app-state (atom nil))
 
 (defn init []
   (do
-    (reset! app-state {:loggedIn false :text "Login"})
+    (enable-console-print!)
+    (reset! app-state {:loggedIn false})
+    (routes/init)
     (om/root
       views/login
       app-state
-      {:target (. js/document (getElementById "wag-main-container"))})
-    (secretary/dispatch! "/login")
+      {:target (views/get-by-id "wag-main-container")})
     (println "WAG initialized")
-    (println "Dispatching login")))
-
-(init)
+    (println "Dispatching login"))
+  (secretary/dispatch! "/login"))
 
 (comment
   (ns wag.core)
   (swap! app-state assoc :text ":)")
   (js/alert "hm!")
   (println "x!")
-  (map)
   )
