@@ -15,7 +15,7 @@
     (om/root
       views/login
       app-state
-      {:target (. js/document (getElementById "app"))})
+      {:target (. js/document (getElementById "wag-main-container"))})
     (secretary/dispatch! "/login")
     (println "WAG initialized")
     (println "Dispatching login")))
