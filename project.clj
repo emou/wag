@@ -17,9 +17,11 @@
     [http-kit "2.1.5"]
     [clj-wamp "1.0.0-rc1"]
 
-    ; Client-side deps
+    ; Clojurescript deps
     [org.clojure/clojurescript "0.0-2280"
     :exclusions [org.apache.ant/ant]]
+    [sablono "0.2.22"]
+    [secretary "1.2.0"]
     [om "0.7.1"]
   ]
   :plugins [[lein-cljsbuild "1.0.3"]
