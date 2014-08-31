@@ -87,10 +87,16 @@
       (render-partial
         app
         [[:h4 "Dashboard"]
-         [:a {:href "#"
-              :on-click #(wag.core/dispatch! "/new-game")}
-          "New game"]
-         ]))))
+         [:ul
+          [:li
+           [:a {:href "#"
+                :on-click #(wag.core/dispatch! "/new-game")}
+            "New game"]]
+          [:li
+           [:a {:href "#"
+                :on-click #(wag.core/dispatch! "/join-game")}
+            "Join game"]]
+          ]]))))
 
 (defn new-game [app]
   (reify
@@ -98,4 +104,12 @@
     (render [_]
       (render-partial
         app
-        [[:h4 "Start a new game"]]))))
+        [[:h4 "Start a new game and present the user a pass ID"]]))))
+
+(defn join-game [app]
+  (reify
+    om/IRender
+    (render [_]
+      (render-partial
+        app
+        [[:h4 "Join an existing game by providing pass ID"]]))))

@@ -13,4 +13,7 @@
                        :template views/dashboard})
   (secretary/defroute "/new-game" []
                       {:state {}
-                       :template views/new-game}))
+                       :template views/new-game})
+  (secretary/defroute "/join-game" []
+                      {:state {}
+                       :template views/join-game}))
