@@ -19,7 +19,9 @@
     (routes/init)
     (println "Application initialized")
     (println "Dispatching /login")
-    (dispatch! "/login")))
+    (dispatch! "/login")
+    (dispatch! "/dashboard") ; Skip login. For testing
+    ))
 
 (comment
   (ns wag.core)

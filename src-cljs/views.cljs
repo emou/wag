@@ -80,6 +80,8 @@
           ]]))
     ))
 
+(defn new-game [])
+
 (defn dashboard [app]
   (reify
     om/IRender
@@ -87,5 +89,7 @@
       (render-partial
         app
         [[:h4 "Dashboard"]
-         [:a {:href "#"} "New game"]
+         [:a {:href "#"
+              :on-click new-game}
+          "New game"]
          ]))))
