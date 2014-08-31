@@ -8,8 +8,6 @@
             [clojure.tools.logging :as log]
             [cemerick.austin.repls :refer (browser-connected-repl-js)]))
 
-(println (browser-connected-repl-js))
-
 (defroutes app-routes*
   (GET "/ws" [:as req] (wamp-handler req))
   ;; If there's no REPL running, return empty string;
