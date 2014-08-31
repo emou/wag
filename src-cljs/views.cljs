@@ -80,8 +80,6 @@
           ]]))
     ))
 
-(defn new-game [])
-
 (defn dashboard [app]
   (reify
     om/IRender
@@ -90,6 +88,14 @@
         app
         [[:h4 "Dashboard"]
          [:a {:href "#"
-              :on-click new-game}
+              :on-click #(wag.core/dispatch! "/new-game")}
           "New game"]
          ]))))
+
+(defn new-game [app]
+  (reify
+    om/IRender
+    (render [_]
+      (render-partial
+        app
+        [[:h4 "Start a new game"]]))))

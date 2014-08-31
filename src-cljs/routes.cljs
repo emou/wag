@@ -6,8 +6,11 @@
 
 (defn init []
   (secretary/defroute "/login" []
-                      {:state {:logged-in false}
+                      {:state {}
                        :template views/login})
   (secretary/defroute "/dashboard" []
-                      {:state {:logged-in true}
-                       :template views/dashboard}))
+                      {:state {}
+                       :template views/dashboard})
+  (secretary/defroute "/new-game" []
+                      {:state {}
+                       :template views/new-game}))
