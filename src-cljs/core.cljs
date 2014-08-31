@@ -6,20 +6,20 @@
             [wag.routes :as routes]
             [wag.views :as views]))
 
-(def app-state (atom nil))
+(defn dispatch! [path]
+  (let [{:keys [template, state]} (secretary/dispatch! path)]
+    (om/root
+      template
+      state
+      {:target (views/get-by-id "wag-main-container")})))
 
 (defn init []
   (do
     (enable-console-print!)
-    (reset! app-state {:loggedIn false})
     (routes/init)
-    (om/root
-      views/login
-      app-state
-      {:target (views/get-by-id "wag-main-container")})
-    (println "WAG initialized")
-    (println "Dispatching login"))
-  (secretary/dispatch! "/login"))
+    (println "Application initialized")
+    (println "Dispatching /login")
+    (dispatch! "/login")))
 
 (comment
   (ns wag.core)

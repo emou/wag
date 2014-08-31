@@ -1,8 +1,13 @@
 (ns wag.views
   (:require
     [om.core :as om :include-macros true]
+    [secretary.core :as secretary :include-macros true]
     [sablono.core :as html :refer-macros [html]]
+    [wag.core]
     [wag.wamp-client :as wamp-client]))
+
+(def WS_URI "ws://localhost:8080/ws")
+(def BASE_TOPIC_URI "http://wag/")
 
 (defn header [app]
   [:div
@@ -20,13 +25,27 @@
 (defn value-by-id [id]
   (.-value (wag.views/get-by-id id)))
 
-(def WS_URI "ws://localhost:8080/ws")
-(def BASE_TOPIC_URI "http://wag/")
+(defn error-message [error]
+  (case (:type error)
+    :auth "Wrong username or password. Please try again"
+    "Could not connect to the server. Please try again later"))
+
+(defn handle-error [error]
+  (js/alert (error-message error)
+            (wag.core/dispatch! "/login")))
+
+(defn on-connection [{:keys [error, session]}]
+  (if error
+    (handle-error error)
+    (do
+      (println "Authenticated session " session)
+      (wag.core/dispatch! "/dashboard"))))
 
 (defn attempt-login [username password]
   (do
     (println "Attempting log in as " username)
-    (wamp-client/connect WS_URI BASE_TOPIC_URI username password)))
+    (wamp-client/connect WS_URI BASE_TOPIC_URI
+                         username password on-connection)))
 
 (defn login [app]
   (reify
@@ -41,15 +60,13 @@
            :role "form"
            :on-submit #(attempt-login
                          (value-by-id "login-username")
-                         (value-by-id "login-password"))
-           }
+                         (value-by-id "login-password"))}
 
           [:input
            {:id "login-username"
             :type "text"
             :class "form-control"
-            :placeholder "Username"
-            }]
+            :placeholder "Username"}]
 
           [:input
            {:id "login-password"
@@ -62,3 +79,13 @@
             :type "submit"} "Sign in"]
           ]]))
     ))
+
+(defn dashboard [app]
+  (reify
+    om/IRender
+    (render [_]
+      (render-partial
+        app
+        [[:h4 "Dashboard"]
+         [:a {:href "#"} "New game"]
+         ]))))

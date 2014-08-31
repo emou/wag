@@ -31,7 +31,7 @@
 ;; Currently all users can login using "password".
 (defn- auth-secret [sess-id auth-key extra]
   "Returns the auth key's secret (ie. password), typically retrieved from a database."
-  "password")
+  "1")
 
 (defn- auth-permissions
   "Returns the permissions for a client session by auth key."
