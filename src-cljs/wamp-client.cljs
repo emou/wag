@@ -1,7 +1,4 @@
 (ns wag.wamp-client)
-  ;; (:require-macros
-  ;;   [cljs.core.async.macros :as asyncm :refer (go go-loop)])
-  ;; (:require [cljs.core.async :as async :refer (<! >! put! chan)]))
 
 (defn on-auth [{:keys [base_topic_uri, callback]} session permissions]
   (do
@@ -51,14 +48,3 @@
               uri
               (partial on-connect connection-request)
               (partial on-connect-error connection-request))))
-;;
-;; (defn send-error [channel error]
-;;   (send-result channel nil error))
-;;
-;; (defn send-success [ws-channel]
-;;   (send-result ws-channel nil error))
-;;
-;; (defn- send-result [channel ws-channel error]
-;;   (go
-;;     (>! ws-channel {:error error
-;;                     :channel ws-channel})))
