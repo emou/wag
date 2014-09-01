@@ -3,7 +3,7 @@
     [om.core :as om :include-macros true]
     [secretary.core :as secretary :include-macros true]
     [sablono.core :as html :refer-macros [html]]
-    [wag.core]
+    [wag.routes]
     [wag.wamp-client :as wamp-client]))
 
 (def WS_URI "ws://localhost:8080/ws")
@@ -32,14 +32,14 @@
 
 (defn handle-error [error]
   (js/alert (error-message error)
-            (wag.core/dispatch! "/login")))
+            (wag.routes/dispatch! "/login")))
 
 (defn on-connection [{:keys [error, session]}]
   (if error
     (handle-error error)
     (do
       (println "Authenticated session " session)
-      (wag.core/dispatch! "/dashboard"))))
+      (wag.routes/dispatch! "/dashboard"))))
 
 (defn attempt-login [username password]
   (do
@@ -90,11 +90,11 @@
          [:ul
           [:li
            [:a {:href "#"
-                :on-click #(wag.core/dispatch! "/new-game")}
+                :on-click #(wag.routes/dispatch! "/new-game")}
             "New game"]]
           [:li
            [:a {:href "#"
-                :on-click #(wag.core/dispatch! "/join-game")}
+                :on-click #(wag.routes/dispatch! "/join-game")}
             "Join game"]]
           ]]))))
 

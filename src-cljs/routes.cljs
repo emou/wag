@@ -3,7 +3,8 @@
     [secretary.core :as secretary :include-macros true]
     [om.core :as om :include-macros true]
     [wag.actions :as actions]
-    [wag.views :as views]))
+    [wag.views :as views]
+    [wag.core]))
 
 (defn init []
   (secretary/defroute "/login" []
@@ -16,8 +17,8 @@
                       (actions/join-game)))
 
 (defn dispatch! [path]
-  (let [{:keys [template, state]} (secretary/dispatch! path)]
+  (let [{:keys [template]} (secretary/dispatch! path)]
     (om/root
       template
-      state
+      wag.core/app-state
       {:target (views/get-by-id "wag-main-container")})))

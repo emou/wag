@@ -2,6 +2,8 @@
   (:require [clojure.browser.repl]
             [wag.routes :as routes]))
 
+(def app-state (atom nil))
+
 (defn init []
   (do
     (enable-console-print!)

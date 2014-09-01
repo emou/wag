@@ -2,17 +2,13 @@
   (:require [wag.views :as views]))
 
 (defn login []
-  {:state {}
-   :template views/login})
+  {:template views/login})
 
 (defn dashboard []
-  {:state {}
-   :template views/dashboard})
+  {:template views/dashboard})
 
 (defn new-game []
-  {:state {}
-   :template views/new-game})
+  {:template views/new-game})
 
 (defn join-game []
-  {:state {}
-   :template views/join-game})
+  {:template views/join-game})
