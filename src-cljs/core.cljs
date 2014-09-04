@@ -1,8 +1,23 @@
 (ns wag.core
   (:require [clojure.browser.repl]
-            [wag.routes :as routes]))
+            [clojure.walk :refer [keywordize-keys]]
+            [wag.routes :as routes]
+            [wag.views :as views]))
 
 (def app-state (atom nil))
+
+(def wamp-session (atom nil))
+
+(defn handle-event! [js-event]
+  (let [event (keywordize-keys (js->clj js-event))]
+    (when (= (:type event) "games")
+      (swap! app-state assoc :events event))))
+
+(defn set-wamp-session! [session]
+  (reset! wag.core/wamp-session session))
+
+(defn get-wamp-session []
+  @wamp-session)
 
 (defn init []
   (do
@@ -11,8 +26,7 @@
     (println "Application initialized")
     (println "Dispatching /login")
     (routes/dispatch! "/login")
-    ; Skip login. For testing
-    (routes/dispatch! "/dashboard")
+    (views/attempt-login "guest" "1") ; Auto-login. For easier testing.
     ))
 
 (comment

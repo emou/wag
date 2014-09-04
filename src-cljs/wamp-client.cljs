@@ -1,11 +1,10 @@
 (ns wag.wamp-client)
 
-(defn on-auth [{:keys [base_topic_uri, callback]} session permissions]
+(defn on-auth [{:keys [callback, username]} session permissions]
   (do
     (println "Authenticated!")
-    (.prefix session "event" (str base_topic_uri "event#"))
-    (.prefix session "rpc" (str base_topic_uri "rpc#")))
-    (callback {:session session}))
+    (callback {:session session
+               :username username})))
 
 (defn- error-with-type [error-type]
   {:error {:type error-type}})
@@ -35,16 +34,19 @@
 (defn on-connect-error [{:keys [callback]} code reason]
   (callback (error-with-type :connect)))
 
-(defn connect [uri base_topic_uri username password callback]
+(defn connect [uri username password callback]
   (let [connection-request {:uri uri
-                            :base_topic_url base_topic_uri
                             :username username
                             :password password
                             :callback callback}]
-
-    (enable-console-print!)
-    (println "wamp-client attempting connection to " uri)
+    (.log js/console "wamp-client attempting connection to " uri)
     (.connect js/ab
               uri
               (partial on-connect connection-request)
               (partial on-connect-error connection-request))))
+
+(defn rpc-call [session call-name callback]
+  (->
+    session
+    (.call (str "rpc:" call-name))
+    (.then callback)))

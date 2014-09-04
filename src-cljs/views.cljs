@@ -4,10 +4,10 @@
     [secretary.core :as secretary :include-macros true]
     [sablono.core :as html :refer-macros [html]]
     [wag.routes]
+    [wag.core]
     [wag.wamp-client :as wamp-client]))
 
 (def WS_URI "ws://localhost:8080/ws")
-(def BASE_TOPIC_URI "http://wag/")
 
 (defn header [app]
   [:div
@@ -34,18 +34,25 @@
   (js/alert (error-message error)
             (wag.routes/dispatch! "/login")))
 
-(defn on-connection [{:keys [error, session]}]
+(defn on-connection [{:keys [error, session, username]}]
   (if error
     (handle-error error)
     (do
-      (println "Authenticated session " session)
+      (aset js/window "sess" session)
+      (.subscribe
+        session
+        (str "user/" username)
+        (fn [topic, event]
+          (wag.core/handle-event! event)
+          (.log js/console "Got topic " topic " event " event)))
+      
+      (wag.core/set-wamp-session! session)
       (wag.routes/dispatch! "/dashboard"))))
 
 (defn attempt-login [username password]
   (do
     (println "Attempting log in as " username)
-    (wamp-client/connect WS_URI BASE_TOPIC_URI
-                         username password on-connection)))
+    (wamp-client/connect WS_URI username password on-connection)))
 
 (defn login [app]
   (reify
@@ -86,17 +93,22 @@
     (render [_]
       (render-partial
         app
-        [[:h4 "Dashboard"]
-         [:ul
-          [:li
-           [:a {:href "#"
-                :on-click #(wag.routes/dispatch! "/new-game")}
-            "New game"]]
-          [:li
-           [:a {:href "#"
-                :on-click #(wag.routes/dispatch! "/join-game")}
-            "Join game"]]
-          ]]))))
+        [[:button {:class "btn btn-block btn-primary"
+                   :on-click #(wag.routes/dispatch! "/new-game")}
+          "New game"]
+
+         [:button {:class "btn btn-block btn-primary"
+                   :on-click #(wag.routes/dispatch! "/join-game")}
+          "Join game"]
+
+         [:h5 "Active games"]
+
+         (let [games (:games app)]
+           (if (empty? games)
+             [:i "You have not joined any games yet"]
+             [:ul
+              (for [game (:games app)]
+                [:li [:a {:href "#"}] (:id game)])]))]))))
 
 (defn new-game [app]
   (reify
