@@ -3,9 +3,10 @@
     [om.core :as om :include-macros true]
     [secretary.core :as secretary :include-macros true]
     [sablono.core :as html :refer-macros [html]]
-    [wag.routes]
-    [wag.state]
+    [wag.routes :as routes]
+    [wag.state :as state]
     [wag.log :as log]
+    [wag.game :as wgame]
     [wag.wamp-client :as wamp-client]))
 
 (def WS_URI "ws://localhost:8080/ws")
@@ -34,7 +35,7 @@
 
 (defn handle-error [error]
   (js/alert (error-message error)
-            (wag.routes/dispatch! "/login")))
+            (routes/dispatch! "/login")))
 
 (defn on-connection [{:keys [error, session, username]}]
   (if error
@@ -45,11 +46,11 @@
         session
         (str "user/" username)
         (fn [topic, event]
-          (wag.state/handle-event! event)
+          (state/handle-event! event)
           (.log js/console "Got topic " topic " event " event)))
       
-      (wag.state/set-wamp-session! session)
-      (wag.routes/dispatch! "/dashboard"))))
+      (state/set-wamp-session! session)
+      (routes/dispatch! "/dashboard"))))
 
 (defn attempt-login [username password]
   (do
@@ -112,18 +113,18 @@
                  (str "Created by " (:creator game))
                  [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
                   [:button {:class "btn btn-default"
-                            :on-click #(wag.routes/dispatch! (str "/play-game/" game-id))}
+                            :on-click #(routes/dispatch! (str "/play-game/" game-id))}
                    "Play"]
                   [:button {:class "btn btn-default"
-                            :on-click #(wag.routes/dispatch! (str "/quit-game/" game-id))}
+                            :on-click #(routes/dispatch! (str "/quit-game/" game-id))}
                    "Quit"]]])]))
 
          [:button {:class "btn btn-block btn-primary"
-                   :on-click #(wag.routes/dispatch! "/new-game")}
+                   :on-click #(routes/dispatch! "/new-game")}
           "Start a new game"]
 
          [:button {:class "btn btn-block btn-primary"
-                   :on-click #(wag.routes/dispatch! "/join-game")}
+                   :on-click #(routes/dispatch! "/join-game")}
           "Join another game"]]
          ))))
 
@@ -147,11 +148,36 @@
     om/IRender
     (render [_]
       (log/debug "play-game render called")
-      (html
-        (if-let [game (get-in app [:joined-games (:played-game-id app)])]
-           [:h5 (str "Playing game " (:id game))]
-           [:h5 "Loading game"])
-         ))))
+      (if-let [game (get-in app [:joined-games (:played-game-id app)])]
+        (om/build game-ui game)
+        (html [:h5 "Loading game"])))))
+
+(defn game-ui [game]
+  (reify
+    om/IRender
+    (render [_]
+      (html [:div
+             [:h5 (str "Playing game " (:id game))]
+
+             (log/debug "my username: ?? " (state/my-username))
+
+             (let [other-players (wgame/other-players game (state/my-username))]
+               (if (empty? players)
+                 [:i "You have not joined any games yet"]
+                 [:ul {:class "list-group"}
+                  (for [[game-id-kw game] games
+                        :let [game-id (name game-id-kw)]]
+                    [:li {:key game-id :class "list-group-item"}
+                     [:h5 (str game-id " (" (pluralize "player" (count (:players game))) ")")]
+                     (str "Created by " (:creator game))
+                     [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
+                      [:button {:class "btn btn-default"
+                                :on-click #(routes/dispatch! (str "/play-game/" game-id))}
+                       "Play"]
+                      [:button {:class "btn btn-default"
+                                :on-click #(routes/dispatch! (str "/quit-game/" game-id))}
+                       "Quit"]]])]))
+             ]))))
 
 (defn app [app-state owner]
   (reify
@@ -168,5 +194,5 @@
 
 (om/root
   app
-  wag.state/app-state
+  state/app-state
   {:target (get-by-id "wag-main-container")})
