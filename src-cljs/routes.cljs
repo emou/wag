@@ -2,9 +2,10 @@
   (:require 
     [secretary.core :as secretary :include-macros true]
     [om.core :as om :include-macros true]
+    [wag.state :as state]
     [wag.actions :as actions]
     [wag.views :as views]
-    [wag.core]))
+    [wag.log :as log]))
 
 (defn init []
   (secretary/defroute "/login" []
@@ -14,11 +15,14 @@
   (secretary/defroute "/new-game" []
                       (actions/new-game))
   (secretary/defroute "/join-game" []
-                      (actions/join-game)))
+                      (actions/join-game))
+  (secretary/defroute "/play-game/:id" {:as params}
+                        (actions/play-game (:id params))))
 
 (defn dispatch! [path]
-  (let [{:keys [template]} (secretary/dispatch! path)]
+  (log/info "Dispatching " path)
+  (let [{:keys [view]} (secretary/dispatch! path)]
     (om/root
-      template
-      wag.core/app-state
+      view
+      wag.state/app-state
       {:target (views/get-by-id "wag-main-container")})))

@@ -4,7 +4,7 @@
     [secretary.core :as secretary :include-macros true]
     [sablono.core :as html :refer-macros [html]]
     [wag.routes]
-    [wag.core]
+    [wag.state]
     [wag.wamp-client :as wamp-client]))
 
 (def WS_URI "ws://localhost:8080/ws")
@@ -48,10 +48,10 @@
         session
         (str "user/" username)
         (fn [topic, event]
-          (wag.core/handle-event! event)
+          (wag.state/handle-event! event)
           (.log js/console "Got topic " topic " event " event)))
       
-      (wag.core/set-wamp-session! session)
+      (wag.state/set-wamp-session! session)
       (wag.routes/dispatch! "/dashboard"))))
 
 (defn attempt-login [username password]
@@ -109,8 +109,12 @@
                  [:h5 (str (:id game) " (" (pluralize "player" (count (:players game))) ")")]
                  (str "Created by " (:creator game))
                  [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
-                  [:button {:class "btn btn-default"} "Play"]
-                  [:button {:class "btn btn-default"} "Quit"]]])]))
+                  [:button {:class "btn btn-default"
+                            :on-click #(wag.routes/dispatch! (str "/play-game/" (:id game)))}
+                   "Play"]
+                  [:button {:class "btn btn-default"
+                            :on-click #(wag.routes/dispatch! (str "/quit-game/" (:id game)))}
+                   "Quit"]]])]))
 
          [:button {:class "btn btn-block btn-primary"
                    :on-click #(wag.routes/dispatch! "/new-game")}
@@ -121,14 +125,6 @@
           "Join another game"]
          ]))))
 
-(defn new-game [app]
-  (reify
-    om/IRender
-    (render [_]
-      (render-partial
-        app
-        [[:h4 "Creating a new game ..."]]))))
-
 (defn join-game [app]
   (reify
     om/IRender
@@ -136,3 +132,13 @@
       (render-partial
         app
         [[:h4 "Join an existing game by providing pass ID"]]))))
+
+(defn play-game [app]
+  (reify
+    om/IRender
+    (render [_]
+      (render-partial
+        app
+        [(if (wag.state/get-played-game)
+           [:h4 "Play the fuckin game dude"]
+           [:h4 "Loading game ..."])]))))

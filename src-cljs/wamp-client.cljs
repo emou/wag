@@ -1,8 +1,9 @@
-(ns wag.wamp-client)
+(ns wag.wamp-client
+  (:require [wag.log :as log]))
 
 (defn on-auth [{:keys [callback, username]} session permissions]
   (do
-    (println "Authenticated!")
+    (log/debug "Authenticated!")
     (callback {:session session
                :username username})))
 
@@ -17,7 +18,7 @@
 
 (defn on-challenge [{:keys [password] :as connection-request} session challenge]
   (let [signature (.authsign session password challenge)]
-    (println "Received auth challenge " challenge)
+    (log/debug "Received auth challenge " challenge)
     (.then (.auth session signature)
            (partial on-auth connection-request session)
            (partial on-auth-error connection-request))))
@@ -25,8 +26,8 @@
 (defn on-connect [{:keys [uri username password] :as connection-request}
                   session]
   (do
-    (println "Connected to " uri
-             " with session ID " (.sessionid session))
+    (log/debug "Connected to " uri
+               " with session ID " (.sessionid session))
     (.then (.authreq session username)
            (partial on-challenge connection-request session)
            (partial on-authreq-error connection-request))))
@@ -39,7 +40,7 @@
                             :username username
                             :password password
                             :callback callback}]
-    (.log js/console "wamp-client attempting connection to " uri)
+    (log/info)
     (.connect js/ab
               uri
               (partial on-connect connection-request)

@@ -1,22 +1,27 @@
 (ns wag.actions
   (:require [wag.views :as views]
             [wag.wamp-client :as wamp-client]
-            [wag.core]))
+            [wag.core]
+            [wag.log :as log]))
 
 (enable-console-print!)
 
 (defn login []
-  {:template views/login})
+  {:view views/login})
 
 (defn dashboard []
-  {:template views/dashboard})
+  {:view views/dashboard})
 
 (defn new-game []
-  (wamp-client/rpc-call (wag.core/get-wamp-session)
+  (wamp-client/rpc-call (wag.state/get-wamp-session)
                         "new-game"
                         (fn [result]
-                          (printlin "new-game returned: " result)))
-  {:template views/new-game})
+                          (wag.state/set-played-game! result)))
+  {:view views/play-game})
 
 (defn join-game []
-  {:template views/join-game})
+  {:view views/join-game})
+
+(defn play-game [game-id]
+  (log/info "play-game !" game-id)
+  {:view views/play-game})
