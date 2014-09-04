@@ -41,15 +41,21 @@
   (if error
     (handle-error error)
     (do
-      (aset js/window "sess" session)
       (.subscribe
         session
         (str "user/" username)
         (fn [topic, event]
-          (state/handle-event! event)
-          (.log js/console "Got topic " topic " event " event)))
+          (log/debug "Got private event on " topic event)
+          (state/handle-event! event)))
+
+      (.subscribe
+        session
+        "new-game"
+        (fn [topic, event]
+          (state/handle-new-game! event)))
       
       (state/set-wamp-session! session)
+
       (routes/dispatch! "/dashboard"))))
 
 (defn attempt-login [username password]
@@ -162,11 +168,8 @@
          (let [game-id-kw (:joining-game-id app)
                game-id (name game-id-kw)
                game ((:available-games app) game-id-kw)]
-           (log/debug "game kyes " (:available-games app))
-           (log/debug "game id " game-id-kw)
-           (log/debug "GAME " game)
            [:h4 (str "Join " game-id)]
-           [:i (str "Creator " game)])]))))
+           [:i (str "Creator " (:creator game))])]))))
 
 (defn game-ui [game]
   (reify
@@ -191,9 +194,10 @@
 
     om/IRender
     (render [_]
-      (if-let [game (get-in app [:joined-games (:played-game-id app)])]
-        (om/build game-ui game)
-        (html [:h5 "Loading game"])))))
+      (do
+        (if-let [game (get-in app [:joined-games (:played-game-id app)])]
+          (om/build game-ui game)
+          (html [:h5 "Loading game ..."]))))))
 
 (defn app [app-state owner]
   (reify
