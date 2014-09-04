@@ -9,6 +9,11 @@
 
 (def WS_URI "ws://localhost:8080/ws")
 
+(defn pluralize [word cnt]
+  (if (= 1 cnt)
+    (str cnt " " word)
+    (str cnt " " word "s")))
+
 (defn header [app]
   [:div
    [:h1 "Word Association Game"]
@@ -93,22 +98,28 @@
     (render [_]
       (render-partial
         app
-        [[:button {:class "btn btn-block btn-primary"
+
+        [[:h4 "Joined games"]
+         (let [games (:joined-games app)]
+           (if (empty? games)
+             [:i "You have not joined any games yet"]
+             [:ul {:class "list-group"}
+              (for [game games]
+                [:li {:key (:id game) :class "list-group-item"}
+                 [:h5 (str (:id game) " (" (pluralize "player" (count (:players game))) ")")]
+                 (str "Created by " (:creator game))
+                 [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
+                  [:button {:class "btn btn-default"} "Play"]
+                  [:button {:class "btn btn-default"} "Quit"]]])]))
+
+         [:button {:class "btn btn-block btn-primary"
                    :on-click #(wag.routes/dispatch! "/new-game")}
-          "New game"]
+          "Start a new game"]
 
          [:button {:class "btn btn-block btn-primary"
                    :on-click #(wag.routes/dispatch! "/join-game")}
-          "Join game"]
-
-         [:h5 "Active games"]
-
-         (let [games (:games app)]
-           (if (empty? games)
-             [:i "You have not joined any games yet"]
-             [:ul
-              (for [game (:games app)]
-                [:li [:a {:href "#"}] (:id game)])]))]))))
+          "Join another game"]
+         ]))))
 
 (defn new-game [app]
   (reify
@@ -116,7 +127,7 @@
     (render [_]
       (render-partial
         app
-        [[:h4 "Start a new game and present the user a pass ID"]]))))
+        [[:h4 "Creating a new game ..."]]))))
 
 (defn join-game [app]
   (reify

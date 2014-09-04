@@ -48,5 +48,5 @@
 (defn rpc-call [session call-name callback]
   (->
     session
-    (.call (str "rpc:" call-name))
+    (.call call-name)
     (.then callback)))

@@ -10,8 +10,8 @@
 
 (defn handle-event! [js-event]
   (let [event (keywordize-keys (js->clj js-event))]
-    (when (= (:type event) "games")
-      (swap! app-state assoc :events event))))
+    (when (= (:type event) "joined-games")
+      (swap! app-state assoc :joined-games (event :games)))))
 
 (defn set-wamp-session! [session]
   (reset! wag.core/wamp-session session))

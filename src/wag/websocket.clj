@@ -23,9 +23,9 @@
 
 (defn- generate-game-id [] (str (java.util.UUID/randomUUID)))
 
-(def games-by-id (atom {}))
-(def users-by-username (atom {}))
-(def usernames-by-session-id (atom {}))
+(defonce games-by-id (atom {}))
+(defonce users-by-username (atom {}))
+(defonce usernames-by-session-id (atom {}))
 
 (defn- add-user! [sess-id username]
   (when-not (contains? @users-by-username username)
@@ -43,11 +43,12 @@
   (let [game-id (generate-game-id)]
     (swap! games-by-id assoc game-id
            {:creator username
-            :players [username]})
+            :players [username]
+            :id game-id})
     (swap! users-by-username update-in [username :game-ids] conj game-id)))
 
 (defn- games-for-user [username]
-  (map #(games-by-id %) (get-in users-by-username [username :game-ids])))
+  (map #(@games-by-id %) (get-in @users-by-username [username :game-ids])))
 
 (defn- on-user-authenticated [sess-id username]
   (add-user! sess-id username))
@@ -63,18 +64,18 @@
     (on-user-authenticated sess-id auth-key)
     {:subscribe {user-private-url true}
      :publish   {user-private-url true}
-     :rpc       {(rpc-url "new-game")  true}}))
+     :rpc       {"new-game" true}}))
 
 (defn- on-subscribe [sess-id topic]
   (log/info (@usernames-by-session-id sess-id) " subscribing to private channel " topic)
   (when (.startsWith topic "user")
-    (wamp/send-event! topic {:type :games
+    (wamp/send-event! topic {:type :joined-games
                              :games (games-for-user (@usernames-by-session-id sess-id))}))
   true)
 
 (defn- new-game []
   (let [sess-id wamp/*call-sess-id*]
-    (log/info "new-game. games: " @games)
+    (log/info "new-game. games: " @games-by-id)
     (add-game! (get-user-by-session-id sess-id))))
 
 (defn wamp-handler
@@ -86,7 +87,17 @@
        :on-close       on-close
        :on-subscribe   {"user/*"  true
                         :on-after on-subscribe}
-       :on-call        {(rpc-url "new-game")  new-game}
-       :on-publish     {:on-after         on-publish}
-       :on-auth        {:secret           auth-secret
-                        :permissions      auth-permissions}})))
+       :on-call        {"new-game"  new-game}
+       :on-publish     {:on-after on-publish}
+       :on-auth        {:secret  auth-secret
+                        :permissions auth-permissions}})))
+
+(comment
+  ;; repl test area
+  (defn- clear-state! []
+    (reset! games-by-id {})
+    (reset! users-by-username {})
+    (reset! usernames-by-session-id {}))
+  (clear-state!)
+  (games-for-user "guest")
+  (map #(games-by-id %) (get-in @users-by-username [(@usernames-by-session-id "1409818230319-217")])))
