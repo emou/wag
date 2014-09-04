@@ -21,10 +21,6 @@
    [:p
     [:i "A port from real life to Clojure and the web."]]])
 
-(defn render-partial [app partial-html]
-  (html
-    (into (header app) partial-html)))
-
 (defn get-by-id [id]
   (.getElementById js/document id))
 
@@ -64,33 +60,32 @@
   (reify
     om/IRender
     (render [_]
-      (render-partial
-        app
-        [[:form
-          {:id "login-form"
-           :action "#"
-           :class "form-signin"
-           :role "form"
-           :on-submit #(attempt-login
-                         (value-by-id "login-username")
-                         (value-by-id "login-password"))}
+      (html
+        [:form
+         {:id "login-form"
+          :action "#"
+          :class "form-signin"
+          :role "form"
+          :on-submit #(attempt-login
+                        (value-by-id "login-username")
+                        (value-by-id "login-password"))}
 
-          [:input
-           {:id "login-username"
-            :type "text"
-            :class "form-control"
-            :placeholder "Username"}]
+         [:input
+          {:id "login-username"
+           :type "text"
+           :class "form-control"
+           :placeholder "Username"}]
 
-          [:input
-           {:id "login-password"
-            :type "password"
-            :class "form-control"
-            :placeholder "Password"}]
+         [:input
+          {:id "login-password"
+           :type "password"
+           :class "form-control"
+           :placeholder "Password"}]
 
-          [:button
-           {:class "btn btn-lg btn-primary btn-block"
-            :type "submit"} "Sign in"]
-          ]]))
+         [:button
+          {:class "btn btn-lg btn-primary btn-block"
+           :type "submit"} "Sign in"]
+         ]))
     ))
 
 (defn dashboard [app owner]
@@ -103,9 +98,9 @@
       (log/debug "dashboard unmount!!"))
     om/IRender
     (render [_]
-      (render-partial
-        app
-        [[:h4 "Joined games"]
+      (html
+        [:div
+         [:h4 "Joined games"]
          (let [games (:joined-games app)]
            (if (empty? games)
              [:i "You have not joined any games yet"]
@@ -129,16 +124,15 @@
 
          [:button {:class "btn btn-block btn-primary"
                    :on-click #(wag.routes/dispatch! "/join-game")}
-          "Join another game"]
-         ]))))
+          "Join another game"]]
+         ))))
 
 (defn join-game [app owner]
   (reify
     om/IRender
     (render [_]
-      (render-partial
-        app
-        [[:h4 "Join an existing game by providing pass ID"]]))))
+      (html
+        [:h4 "Join an existing game by providing pass ID"]))))
 
 (defn play-game [app owner]
   (reify
@@ -153,18 +147,24 @@
     om/IRender
     (render [_]
       (log/debug "play-game render called")
-      (render-partial
-        app
-        [[:h5 (str "Playing "
-                   (:id (wag.state/get-played-game)))]]))))
+      (html
+        (if-let [game (get-in app [:joined-games (:played-game-id app)])]
+           [:h5 (str "Playing game " (:id game))]
+           [:h5 "Loading game"])
+         ))))
 
 (defn app [app-state owner]
   (reify
     om/IRender
     (render [_]
-      (html (if-let [screen (:screen app-state)]
-              (om/build screen app-state)
-              nil)))))
+      (html
+        [:div
+         [:h1 "Word Association Game"]
+         [:p
+          [:i "A port from real life to Clojure and the web."]]
+         (if-let [screen (:screen app-state)]
+           (om/build screen app-state)
+           nil)]))))
 
 (om/root
   app

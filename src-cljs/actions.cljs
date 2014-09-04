@@ -22,7 +22,5 @@
   {:view views/join-game})
 
 (defn play-game [game-id]
-  (log/debug "game-id " game-id)
   (wag.state/set-played-game! game-id)
-  (log/debug "game" (wag.state/get-played-game))
   {:view views/play-game})
