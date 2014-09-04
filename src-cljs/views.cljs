@@ -102,38 +102,71 @@
       (html
         [:div
          [:h4 "Joined games"]
+
          (let [games (:joined-games app)]
            (if (empty? games)
              [:i "You have not joined any games yet"]
              [:ul {:class "list-group"}
-              (for [[game-id-kw game] games
-                    :let [game-id (name game-id-kw)]]
-                [:li {:key game-id :class "list-group-item"}
-                 [:h5 (str game-id " (" (pluralize "player" (count (:players game))) ")")]
-                 (str "Created by " (:creator game))
-                 [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
-                  [:button {:class "btn btn-default"
-                            :on-click #(routes/dispatch! (str "/play-game/" game-id))}
-                   "Play"]
-                  [:button {:class "btn btn-default"
-                            :on-click #(routes/dispatch! (str "/quit-game/" game-id))}
-                   "Quit"]]])]))
+              (map (fn [game]
+                     (let [game-id-kw (:id game)
+                           game-id (name game-id-kw)]
+                       [:li {:key game-id :class "list-group-item"}
+                        [:h5 (str game-id " (" (pluralize "player" (wgame/player-count game)) ")")]
+                        (str "Created by " (:creator game))
+                        [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
+                         [:button {:class "btn btn-default"
+                                   :on-click #(routes/dispatch! (str "/play-game/" game-id))}
+                          "Play"]
+                         [:button {:class "btn btn-default"
+                                   :on-click #(routes/dispatch! (str "/quit-game/" game-id))}
+                          "Quit"]]]))
+                   (vals games))]))
 
          [:button {:class "btn btn-block btn-primary"
                    :on-click #(routes/dispatch! "/new-game")}
           "Start a new game"]
 
          [:button {:class "btn btn-block btn-primary"
-                   :on-click #(routes/dispatch! "/join-game")}
+                   :on-click #(routes/dispatch! "/choose-game")}
           "Join another game"]]
          ))))
+
+(defn choose-game [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        [:div
+         [:h4 "Join an existing game"]
+         (let [games (:available-games app)]
+           (if (empty? games)
+             [:i "No games available for joining"]
+             [:ul {:class "list-group"}
+              (map (fn [game] 
+                     (let [game-id (name (:id game))]
+                       [:li {:key game-id :class "list-group-item"}
+                        [:h5 (str game-id " (" (pluralize "player" (wgame/player-count game)) ")")]
+                        (str "Created by " (:creator game))
+                        [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
+                         [:button {:class "btn btn-default"
+                                   :on-click #(routes/dispatch! (str "/join-game/" game-id))}
+                          "Join"]]]
+                       )) (vals games))]))]))))
 
 (defn join-game [app owner]
   (reify
     om/IRender
     (render [_]
       (html
-        [:h4 "Join an existing game by providing pass ID"]))))
+        [:div
+         (let [game-id-kw (:joining-game-id app)
+               game-id (name game-id-kw)
+               game ((:available-games app) game-id-kw)]
+           (log/debug "game kyes " (:available-games app))
+           (log/debug "game id " game-id-kw)
+           (log/debug "GAME " game)
+           [:h4 (str "Join " game-id)]
+           [:i (str "Creator " game)])]))))
 
 (defn game-ui [game]
   (reify
@@ -158,7 +191,6 @@
 
     om/IRender
     (render [_]
-      (log/debug "play-game render called")
       (if-let [game (get-in app [:joined-games (:played-game-id app)])]
         (om/build game-ui game)
         (html [:h5 "Loading game"])))))

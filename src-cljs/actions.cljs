@@ -18,7 +18,12 @@
                           (wag.state/set-played-game! result)))
   {:view views/play-game})
 
-(defn join-game []
+(defn choose-game []
+  {:view views/choose-game})
+
+(defn join-game [game-id]
+  ;; TODO: Pass local state to om component?
+  (wag.state/set-joining-game! game-id)
   {:view views/join-game})
 
 (defn play-game [game-id]

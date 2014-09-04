@@ -14,8 +14,10 @@
                       (actions/dashboard))
   (secretary/defroute "/new-game" []
                       (actions/new-game))
-  (secretary/defroute "/join-game" []
-                      (actions/join-game))
+  (secretary/defroute "/choose-game" []
+                      (actions/choose-game))
+  (secretary/defroute "/join-game/:id" {:as params}
+                      (actions/join-game (keyword (:id params))))
   (secretary/defroute "/play-game/:id" {:as params}
                         (actions/play-game (keyword (:id params)))))
 

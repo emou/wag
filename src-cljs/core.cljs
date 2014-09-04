@@ -5,8 +5,6 @@
             [wag.log :as log])
   (:import [goog Uri]))
 
-(log/debug "Uri " Uri)
-
 (def username
   (->
     (new Uri (.-location js/window))
@@ -16,8 +14,7 @@
   (do
     (enable-console-print!)
     (routes/init)
-    (println "Application initialized")
-    (println "Dispatching /login")
+    (log/debug "Application initialized")
     (routes/dispatch! "/login")
     (views/attempt-login (or username "guest") "1") ; Auto-login. For easier testing.
     ))

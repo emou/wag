@@ -3,6 +3,7 @@
   (:require [clojure.tools.logging :as log]
             [org.httpkit.server :as http-kit]
             [clj-wamp.server :as wamp]
+            [wag.game :as wgame]
             [wag.state :as state]))
 
 ;; HTTP Kit/WAMP WebSocket handler
@@ -42,7 +43,7 @@
   (let [username (state/username-by-session-id sess-id)]
     (wamp/send-event! (user-private-channel-url username)
                       {:type :reset-state
-                       :state {:joined-games (state/games-for-user username)
+                       :state {:games (state/get-all-games)
                                :session-id sess-id
                                :username username}})))
 
@@ -55,8 +56,8 @@
       (send-game! game)
       (:id game))))
 
-(defn- join-game [game-id]
-  (add-player-to-game! game-id wamp/*call-sess-id*))
+(defn- join-game [game-id team]
+  (wgame/add-player-to-game! game-id team wamp/*call-sess-id*))
 
 (defn- on-subscribe [sess-id topic]
   (log/info (state/username-by-session-id sess-id) " subscribing to private channel " topic)
