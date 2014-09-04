@@ -110,7 +110,8 @@
            (if (empty? games)
              [:i "You have not joined any games yet"]
              [:ul {:class "list-group"}
-              (for [[game-id game] games]
+              (for [[game-id-kw game] games
+                    :let [game-id (name game-id-kw)]]
                 [:li {:key game-id :class "list-group-item"}
                  [:h5 (str game-id " (" (pluralize "player" (count (:players game))) ")")]
                  (str "Created by " (:creator game))
@@ -144,15 +145,18 @@
     om/IWillMount
     (will-mount [this]
       (log/debug "play-game mount!!"))
+
     om/IWillUnmount
     (will-unmount [this]
       (log/debug "play-game unmount!!"))
+
     om/IRender
     (render [_]
       (log/debug "play-game render called")
       (render-partial
         app
-        [[:h5 (:id (wag.state/get-played-game))]]))))
+        [[:h5 (str "Playing "
+                   (:id (wag.state/get-played-game)))]]))))
 
 (defn app [app-state owner]
   (reify

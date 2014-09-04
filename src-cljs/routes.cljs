@@ -17,7 +17,7 @@
   (secretary/defroute "/join-game" []
                       (actions/join-game))
   (secretary/defroute "/play-game/:id" {:as params}
-                        (actions/play-game (:id params))))
+                        (actions/play-game (keyword (:id params)))))
 
 (defn dispatch! [path]
   (log/info "Dispatching " path)
