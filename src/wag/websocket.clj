@@ -38,7 +38,7 @@
      :publish   {user-private-url true}
      :rpc       {"new-game" true}}))
 
-(defn- send-initial-state! [sess-id]
+(defn- send-reset-state! [sess-id]
   (let [username (state/username-by-session-id sess-id)]
     (wamp/send-event! (user-private-channel-url username)
                       {:type :reset-state
@@ -46,20 +46,22 @@
                                :session-id sess-id
                                :username username}})))
 
-; TODO
-(defn- send-game! [game-id])
+(defn- send-game! [game]
+  (wamp/send-event! "new-game" game))
 
 (defn- new-game []
   (let [sess-id wamp/*call-sess-id*]
-    (log/info "new-game. games: " @state/games-by-id)
-    (let [game-id (state/add-game! (state/get-user-by-session-id sess-id))]
-      (send-game! sess-id)
-      game-id)))
+    (let [game (state/add-game! (state/get-user-by-session-id sess-id))]
+      (send-game! game)
+      (:id game))))
+
+(defn- join-game [game-id]
+  (add-player-to-game! game-id wamp/*call-sess-id*))
 
 (defn- on-subscribe [sess-id topic]
   (log/info (state/username-by-session-id sess-id) " subscribing to private channel " topic)
   (when (.startsWith topic "user")
-    (send-initial-state! sess-id))
+    (send-reset-state! sess-id))
   true)
 
 (defn wamp-handler
@@ -71,7 +73,8 @@
        :on-close       on-close
        :on-subscribe   {"user/*"  true
                         :on-after on-subscribe}
-       :on-call        {"new-game"  new-game}
+       :on-call        {"new-game" new-game
+                        "join-game" join-game }
        :on-publish     {:on-after on-publish}
        :on-auth        {:secret  auth-secret
                         :permissions auth-permissions}})))

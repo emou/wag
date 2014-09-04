@@ -135,6 +135,17 @@
       (html
         [:h4 "Join an existing game by providing pass ID"]))))
 
+(defn game-ui [game]
+  (reify
+    om/IRender
+    (render [_]
+      (html [:div
+             [:h5 (str "Playing game " (:id game))]
+             (let [needed-players (wgame/players-needed game)]
+               (if (> needed-players 0)
+                 [:i (str "Waiting for " needed-players " more players to join ...")]
+                 [:i "Ha. game running!"]))]))))
+
 (defn play-game [app owner]
   (reify
     om/IWillMount
@@ -152,39 +163,17 @@
         (om/build game-ui game)
         (html [:h5 "Loading game"])))))
 
-(defn game-ui [game]
-  (reify
-    om/IRender
-    (render [_]
-      (html [:div
-             [:h5 (str "Playing game " (:id game))]
-
-             (log/debug "my username: ?? " (state/my-username))
-
-             (let [other-players (wgame/other-players game (state/my-username))]
-               (if (empty? players)
-                 [:i "You have not joined any games yet"]
-                 [:ul {:class "list-group"}
-                  (for [[game-id-kw game] games
-                        :let [game-id (name game-id-kw)]]
-                    [:li {:key game-id :class "list-group-item"}
-                     [:h5 (str game-id " (" (pluralize "player" (count (:players game))) ")")]
-                     (str "Created by " (:creator game))
-                     [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
-                      [:button {:class "btn btn-default"
-                                :on-click #(routes/dispatch! (str "/play-game/" game-id))}
-                       "Play"]
-                      [:button {:class "btn btn-default"
-                                :on-click #(routes/dispatch! (str "/quit-game/" game-id))}
-                       "Quit"]]])]))
-             ]))))
-
 (defn app [app-state owner]
   (reify
     om/IRender
     (render [_]
       (html
         [:div
+         [:nav {:class "navbar navbar-fixed-top navbar-default"
+                :role "navigation"}
+          [:div {:class "navbar-header"}
+           (when-let [username (:username app-state)]
+             [:span {:class "pull-right"} (str "Logged in as " username)])]]
          [:h1 "Word Association Game"]
          [:p
           [:i "A port from real life to Clojure and the web."]]
