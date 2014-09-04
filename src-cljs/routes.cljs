@@ -22,7 +22,4 @@
 (defn dispatch! [path]
   (log/info "Dispatching " path)
   (let [{:keys [view]} (secretary/dispatch! path)]
-    (om/root
-      view
-      wag.state/app-state
-      {:target (views/get-by-id "wag-main-container")})))
+    (wag.state/set-screen! view)))

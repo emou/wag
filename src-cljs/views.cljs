@@ -5,6 +5,7 @@
     [sablono.core :as html :refer-macros [html]]
     [wag.routes]
     [wag.state]
+    [wag.log :as log]
     [wag.wamp-client :as wamp-client]))
 
 (def WS_URI "ws://localhost:8080/ws")
@@ -59,7 +60,7 @@
     (println "Attempting log in as " username)
     (wamp-client/connect WS_URI username password on-connection)))
 
-(defn login [app]
+(defn login [app owner]
   (reify
     om/IRender
     (render [_]
@@ -92,28 +93,33 @@
           ]]))
     ))
 
-(defn dashboard [app]
+(defn dashboard [app owner]
   (reify
+    om/IWillMount
+    (will-mount [this]
+      (log/debug "dashboard mount!!"))
+    om/IWillUnmount
+    (will-unmount [this]
+      (log/debug "dashboard unmount!!"))
     om/IRender
     (render [_]
       (render-partial
         app
-
         [[:h4 "Joined games"]
          (let [games (:joined-games app)]
            (if (empty? games)
              [:i "You have not joined any games yet"]
              [:ul {:class "list-group"}
-              (for [game games]
-                [:li {:key (:id game) :class "list-group-item"}
-                 [:h5 (str (:id game) " (" (pluralize "player" (count (:players game))) ")")]
+              (for [[game-id game] games]
+                [:li {:key game-id :class "list-group-item"}
+                 [:h5 (str game-id " (" (pluralize "player" (count (:players game))) ")")]
                  (str "Created by " (:creator game))
                  [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
                   [:button {:class "btn btn-default"
-                            :on-click #(wag.routes/dispatch! (str "/play-game/" (:id game)))}
+                            :on-click #(wag.routes/dispatch! (str "/play-game/" game-id))}
                    "Play"]
                   [:button {:class "btn btn-default"
-                            :on-click #(wag.routes/dispatch! (str "/quit-game/" (:id game)))}
+                            :on-click #(wag.routes/dispatch! (str "/quit-game/" game-id))}
                    "Quit"]]])]))
 
          [:button {:class "btn btn-block btn-primary"
@@ -125,7 +131,7 @@
           "Join another game"]
          ]))))
 
-(defn join-game [app]
+(defn join-game [app owner]
   (reify
     om/IRender
     (render [_]
@@ -133,12 +139,30 @@
         app
         [[:h4 "Join an existing game by providing pass ID"]]))))
 
-(defn play-game [app]
+(defn play-game [app owner]
+  (reify
+    om/IWillMount
+    (will-mount [this]
+      (log/debug "play-game mount!!"))
+    om/IWillUnmount
+    (will-unmount [this]
+      (log/debug "play-game unmount!!"))
+    om/IRender
+    (render [_]
+      (log/debug "play-game render called")
+      (render-partial
+        app
+        [[:h5 (:id (wag.state/get-played-game))]]))))
+
+(defn app [app-state owner]
   (reify
     om/IRender
     (render [_]
-      (render-partial
-        app
-        [(if (wag.state/get-played-game)
-           [:h4 "Play the fuckin game dude"]
-           [:h4 "Loading game ..."])]))))
+      (html (if-let [screen (:screen app-state)]
+              (om/build screen app-state)
+              nil)))))
+
+(om/root
+  app
+  wag.state/app-state
+  {:target (get-by-id "wag-main-container")})

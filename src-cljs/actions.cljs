@@ -2,9 +2,8 @@
   (:require [wag.views :as views]
             [wag.wamp-client :as wamp-client]
             [wag.core]
-            [wag.log :as log]))
-
-(enable-console-print!)
+            [wag.log :as log]
+            [wag.state]))
 
 (defn login []
   {:view views/login})
@@ -22,6 +21,10 @@
 (defn join-game []
   {:view views/join-game})
 
+(defn s [game-id]
+  (log/debug "game-id " (str game-id))
+  (wag.state/set-played-game! result)
+  (log/debug "game" (wag.state/get-played-game)))
+
 (defn play-game [game-id]
-  (log/info "play-game !" game-id)
   {:view views/play-game})

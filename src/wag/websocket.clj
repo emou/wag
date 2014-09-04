@@ -25,6 +25,9 @@
 (defn- user-private-channel-url [username]
   (str "user/" username))
 
+(defn- on-user-authenticated [sess-id username]
+  (state/add-user! sess-id username))
+
 (defn- auth-permissions
   "Returns the permissions for a client session by auth key."
   [sess-id auth-key]
@@ -35,25 +38,23 @@
      :publish   {user-private-url true}
      :rpc       {"new-game" true}}))
 
-(defn- new-game []
-  (let [sess-id wamp/*call-sess-id*]
-    (log/info "new-game. games: " @state/games-by-id)
-    (state/add-game! (state/get-user-by-session-id sess-id))))
-
-(defn- on-user-authenticated [sess-id username]
-  (state/add-user! sess-id username))
-
 (defn- send-games! [sess-id]
-  (let [username (@usernames-by-session-id sess-id)]
+  (let [username (state/username-by-session-id sess-id)]
     (wamp/send-event! (user-private-channel-url username)
                       {:type :joined-games
                        :games (state/games-for-user username)})))
 
+(defn- new-game []
+  (let [sess-id wamp/*call-sess-id*]
+    (log/info "new-game. games: " @state/games-by-id)
+    (let [game-id (state/add-game! (state/get-user-by-session-id sess-id))]
+      (send-games! sess-id)
+      game-id)))
+
 (defn- on-subscribe [sess-id topic]
-  (log/info (@state/usernames-by-session-id sess-id) " subscribing to private channel " topic)
+  (log/info (state/username-by-session-id sess-id) " subscribing to private channel " topic)
   (when (.startsWith topic "user")
-    (send-games! sess-id)
-    )
+    (send-games! sess-id))
   true)
 
 (defn wamp-handler
