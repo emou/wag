@@ -3,6 +3,7 @@
     [om.core :as om :include-macros true]
     [secretary.core :as secretary :include-macros true]
     [sablono.core :as html :refer-macros [html]]
+    [clojure.string :as string]
     [wag.actions :as actions]
     [wag.game :as wgame]
     [wag.log :as log]
@@ -149,17 +150,68 @@
            (player-list "Team B" game :team-b)
            ])))))
 
+(defn turn-input-placeholder [turn teammate]
+  (str "You need to " (:type turn) " to " teammate))
+
+(defn own-turn-description [own-turn teammate]
+  (let [turn-type (:type own-turn)]
+    [:div
+     [:h3 "It's your turn!"]
+     [:form
+      {:id "own-turn"
+       :action "#"
+       :class ""
+       :role "form"
+       :on-submit (fn [e]
+                    (actions/make-turn {:type turn-type
+                                        :value (value-by-id "own-turn-text")})
+                    false)}
+      [:input
+       {:id "own-turn-text"
+        :type "text"
+        :class "form-control"
+        :placeholder (turn-input-placeholder own-turn teammate)}]]]))
+
+(defn teammate-display [teammate my-username]
+  (if (= teammate my-username)
+    (str "you, " teammate)
+    teammate))
+
+(defn next-turn-description [game]
+  (let [private-state (:private-state game)
+        turn (:next-turn private-state)
+        from-user (:from turn)
+        teammate (wgame/teammate game from-user)
+        my-username (:username @state/app-state)] ; XXX: Don't access global state
+    [:div
+     (if (= from-user my-username)
+       [:h4 (own-turn-description turn teammate)]
+       [:h4 (str "Waiting for " from-user
+                 " to " (:type turn)
+                 " to " (teammate-display teammate my-username)
+                 "...")])]))
+
+(defn turn-history [turn-history]
+  (for [turn turn-history]
+    [:div {:class "alert alert-success"
+           :role "alert"} (:type turn)]))
+
 (defn game-ui [game]
   (reify
     om/IRender
     (render [_]
       (html [:div
              [:h5 (str "Playing game " (:id game))]
-             (let [needed-players (wgame/players-needed game)]
+             (let [needed-players (wgame/players-needed game)
+                   private-state (:private-state game)
+                   winner (:winner private-state)]
                (if (> needed-players 0)
                  [:i (str "Waiting for " needed-players " more players to join ...")]
-                 [:div
-                  [:i "Ha. game running!"]]))]))))
+                 (if winner
+                   [:h2 (str winner " (" (string/join " and " ((keyword winner) game)) ") won!")]
+                   [:div
+                    (next-turn-description game)
+                    (turn-history (:turn-history private-state))])))]))))
 
 (defn play-game [app owner]
   (reify

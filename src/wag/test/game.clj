@@ -18,17 +18,17 @@
 (defn tell-secret [game]
   (wgame/make-turn game "a-first" {:type :tell-secret
                                    :from "a-first"
-                                   :secret "cow"}))
+                                   :value "cow"}))
 
 (defn hint-first [game]
   (wgame/make-turn game "b-first" {:type :hint
                                    :from "b-first"
-                                   :hint "milk"}))
+                                   :value "milk"}))
 
 (defn make-guess [game player guess]
   (wgame/make-turn game "b-first" {:type :guess
                                    :from player
-                                   :guess guess}))
+                                   :value guess}))
 
 (deftest gametest
   (use-fixtures :each setup-game)

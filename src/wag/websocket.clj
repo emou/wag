@@ -1,6 +1,8 @@
 (ns wag.websocket
   (:use [wag.config :only [conf]])
   (:require [clojure.tools.logging :as log]
+            [clojure.string :as string]
+            [clojure.walk :refer [keywordize-keys]]
             [org.httpkit.server :as http-kit]
             [clj-wamp.server :as wamp]
             [wag.game :as wgame]
@@ -36,29 +38,36 @@
   "Returns the permissions for a client session by auth key."
   [sess-id auth-key]
 
-  (let [user-private-url (user-private-channel-url auth-key)]
-    (on-user-authenticated sess-id auth-key)
-    {:subscribe {user-private-url true
-                 "new-game" true
-                 "update-game" true}
+  (on-user-authenticated sess-id auth-key)
+
+  (let [user-private-url (user-private-channel-url auth-key)
+        user (state/get-user-by-session-id sess-id)
+        username (:username user)
+        game-private-url #(user-private-game-url % username)]
+
+    {:subscribe (into {user-private-url true
+                       "new-game" true
+                       "update-game" true}
+                      (for [game-id (:game-ids user)] ;; No support for pattern matching..
+                        [(game-private-url game-id) true]))
+
      :publish   {user-private-url true}
      :rpc       {"new-game" true
-                 "join-game" true}}))
+                 "join-game" true
+                 "make-turn" true}}))
 
-;;
-;; /game/<id>/<user-id>
-;;
-;; for each player
-;;   wgame/private-state-for-player
-;;
+(defn send-private-game-state-for-user! [game username]
+  (let [game-id (:id game)
+        game-channel (user-private-game-url game-id username)]
+    (println "SENDING PGSU TO " game-channel game)
 
-(defn send-private-game-state! [game]
-  (for [username (wgame/players game)
-        game-id (:id game)
-        :let [game-channel (user-private-game-url game-id username)]]
     (wamp/send-event! game-channel
                       {:game-id game-id
                        :private-state (wgame/private-state-for-player game username)})))
+
+(defn send-private-game-state! [game]
+  (doseq [username (wgame/players game)]
+    (send-private-game-state-for-user! game username)))
 
 (defn- send-reset-state! [sess-id]
   (let [username (state/username-by-session-id sess-id)]
@@ -81,24 +90,31 @@
       (:id game))))
 
 (defn- join-game [game-id team]
-  (let [res (state/add-player-to-game! game-id (keyword team) wamp/*call-sess-id*)]
-    (if res
+  (let [new-game (state/add-player-to-game!
+                   game-id
+                   (keyword team)
+                   wamp/*call-sess-id*)]
+    (if new-game
       (do
-        (log/info "Sending update-game!")
-        (send-update-game! (@state/games-by-id game-id)) {})
+        (send-update-game! new-game)
+        (send-private-game-state! (@state/games-by-id game-id))
+        true)
       {:error "Error joining the game"})))
 
-(defn- make-turn [game-id turn]
-  (send-private-game-state!
-    (wgame/make-turn 
-      (@state/games-by-id game-id)
-      (state/username-by-session-id wamp/*call-sess-id*)
-      turn)))
+(defn- make-turn [game-id raw-turn]
+  (let [turn (update-in (keywordize-keys raw-turn) [:type] keyword)
+        new-game (state/make-turn! game-id wamp/*call-sess-id* turn)]
+    (send-private-game-state! new-game)))
 
 (defn- on-subscribe [sess-id topic]
   (log/info (state/username-by-session-id sess-id) " subscribing to " topic)
-  (when (.startsWith topic "user")
+
+  (when (.startsWith topic "user/")
     (send-reset-state! sess-id))
+  (when (.startsWith topic "game/")
+    (let [game-id (second (string/split topic #"/"))
+          username (state/username-by-session-id sess-id)]
+      (send-private-game-state-for-user! (@state/games-by-id game-id) username)))
   true)
 
 (defn wamp-handler
@@ -109,6 +125,7 @@
       {:on-open        on-open
        :on-close       on-close
        :on-subscribe   {"user/*"  true
+                        "game/*" true
                         "new-game" true
                         "update-game" true
                         :on-after on-subscribe}

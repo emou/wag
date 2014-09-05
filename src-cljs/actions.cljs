@@ -14,11 +14,18 @@
 (defn dashboard []
   {:view views/dashboard})
 
-(defn make-turn [game-id turn]
-  (wamp-client/rpc-call (wag.state/get-wamp-session)
-                        ["make-turn"]
-                        (fn [res]
-                          (log/debug "make-turn returned" res))))
+(defn make-turn [turn]
+  (let [game-id (:played-game-id @wag.state/app-state)
+        new-turn (assoc turn :from (:username @wag.state/app-state))]
+    (log/debug "Making turn " new-turn " for game " game-id)
+    (wamp-client/rpc-call (wag.state/get-wamp-session)
+                          ["make-turn" game-id new-turn]
+                          (fn [res]
+                            (log/debug "make-turn returned" res)))))
+
+(defn play-game [game-id]
+  (wag.state/set-played-game! game-id)
+  {:view views/play-game})
 
 (defn new-game []
   (wamp-client/rpc-call (wag.state/get-wamp-session)
@@ -43,10 +50,6 @@
                           (log/debug "join-game returned" ret)))
   (wag.state/set-joining-game! nil)
   (play-game game-id))
-
-(defn play-game [game-id]
-  (wag.state/set-played-game! game-id)
-  {:view views/play-game})
 
 (defn handle-error [error]
   (letfn [(error-message [error]

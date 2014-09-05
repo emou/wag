@@ -11,8 +11,7 @@
   (secretary/defroute "/login" []
                       (actions/login))
   (secretary/defroute "/dashboard" []
-                      (actions/play-game "b764f3c1-d368-4603-99b8-cfa037733356"))
-                      ;; (actions/dashboard))
+                      (actions/dashboard))
   (secretary/defroute "/new-game" []
                       (actions/new-game))
   (secretary/defroute "/choose-game" []

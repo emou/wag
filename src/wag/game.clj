@@ -1,4 +1,5 @@
-(ns wag.game)
+(ns wag.game
+  (:require [clojure.tools.logging :as log]))
 
 (def GAME_PLAYERS_PER_TEAM 2)
 (def GAME_PLAYERS 4)
@@ -11,10 +12,10 @@
   (= (player-count game) GAME_PLAYERS))
 
 (defn- new-private-state []
-  { :next-turn nil
-    :teller nil
-    :knower nil
-    :turn-history [] })
+  {:next-turn nil
+   :teller nil
+   :knower nil
+   :turn-history []})
 
 (defn new-game [id creator]
   {:id id
@@ -54,9 +55,6 @@
     game
     (initial-roles)
     (initial-next-turn)))
-
-(start-game {:team-a #{"a" "b"}
-             :team-b #{"c" "d"}})
 
 (defn add-player-to-game [game team username]
   (when (and
@@ -108,7 +106,7 @@
                  :from (knower game)})
 
       (assoc-in [:private-state :secret]
-                (:secret turn)))))
+                (:value turn)))))
 
 (defn- handle-hint [game turn]
   (assoc-in game
@@ -127,7 +125,7 @@
     (assoc-in [:private-state :winner] (team-of-player game player))))
 
 (defn- handle-guess [game turn]
-  (if (= (get-in game [:private-state :secret]) (:guess turn))
+  (if (= (get-in game [:private-state :secret]) (:value turn))
     (game-won game (:from turn))
     (assoc-in game
               [:private-state :next-turn]
@@ -136,14 +134,15 @@
 
 (defn- public-turn [turn]
   (if (= :tell-secret (:type turn))
-    (dissoc turn :secret)
+    (dissoc turn :value)
     turn))
 
 (defn make-turn [game username turn]
   (let [expected-next-turn (get-in game [:private-state :next-turn])
         expected-keys [:type :from]]
     (assert (.equals (select-keys turn expected-keys)
-                     (select-keys expected-next-turn expected-keys)))
+                     (select-keys expected-next-turn expected-keys))
+            (str "expected " expected-next-turn ", got " turn))
     (->
       (:type turn)
       (case

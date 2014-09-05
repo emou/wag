@@ -11,10 +11,12 @@
 (defn other-players [game my-username]
   (remove #(= (:username %) my-username) (:players game)))
 
+(defn joined-team? [game team username]
+  (some (partial = username) (game team)))
+
 (defn joined? [game my-username]
-  (letfn [(joined-team? [team]
-            (some (partial = my-username) (team game)))]
-    (or (joined-team? :team-a) (joined-team? :team-b))))
+  (or (joined-team? game :team-a my-username)
+      (joined-team? game :team-b my-username)))
 
 (defn players-needed [game]
   (- PLAYERS_COUNT (player-count game)))
@@ -22,3 +24,14 @@
 (defn team-full? [game team]
   (assert (contains? VALID_TEAMS team) (str "Invalid team " team))
   (>= (count (team game)) TEAM_PLAYERS_COUNT))
+
+(defn teammates-by-user [game]
+  {(first (:team-a game)) (second (:team-a game))
+   (second (:team-a game)) (first (:team-a game))
+   (first (:team-b game)) (second (:team-b game))
+   (second (:team-b game)) (first (:team-b game))})
+
+(defn teammate [game user]
+  (log/debug "game" game)
+  (log/debug "teammates-by-user" (teammates-by-user game))
+  ((teammates-by-user game) user))
