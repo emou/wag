@@ -39,8 +39,8 @@
       (is (= (:team-b @game) #{}))
       (is (= (:private-state @game)
               {:next-turn nil
-               :secret-teller nil
-               :secret-knower nil
+               :teller nil
+               :knower nil
                :turn-history []})))
     (testing "add-player-to-game"
       (is (= (:team-a (wgame/add-player-to-game @game :team-a "a-second")
@@ -71,12 +71,12 @@
               :from "a-first"}))
 
       (is (= (get-in (make-guess (hint-first (tell-secret (fill-game @game)))
-                                 "b-second" "milk")
+                                 "b-second" "cow")
                      [:private-state :next-turn]) nil))
-      ;;
-      ;; (is (= (get-in (make-guess (hint-first (tell-secret (fill-game @game)))
-      ;;                            "b-second" "milk")
-      ;;                [:private-state :winner]) :team-a))
+
+      (is (= (get-in (make-guess (hint-first (tell-secret (fill-game @game)))
+                                 "b-second" "cow")
+                     [:private-state]) :team-a))
              )))
 
 (run-tests)

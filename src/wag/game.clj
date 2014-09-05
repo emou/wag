@@ -12,8 +12,8 @@
 
 (defn- new-private-state []
   { :next-turn nil
-    :secret-teller nil
-    :secret-knower nil
+    :teller nil
+    :knower nil
     :turn-history [] })
 
 (defn new-game [id creator]
@@ -113,11 +113,23 @@
             {:type :guess
              :from (next-guess-from game (:from turn)) }))
 
+(defn- team-of-player [game player]
+  (if (contains? (:team-a game) player)
+    :team-a
+    :team-b))
+
+(defn- game-won [game player]
+  (-> game
+    (assoc-in [:private-state :next-turn] nil)
+    (assoc-in [:private-state :winner] (team-of-player game player))))
+
 (defn- handle-guess [game turn]
-  (assoc-in game
-            [:private-state :next-turn]
-            {:type :hint
-             :from (next-hint-from game (:from turn)) }))
+  (if (= (get-in game [:private-state :secret]) (:guess turn))
+    (game-won game (:from turn))
+    (assoc-in game
+              [:private-state :next-turn]
+              {:type :hint
+               :from (next-hint-from game (:from turn)) })))
 
 (defn make-turn [game username turn]
   (let [expected-next-turn (get-in game [:private-state :next-turn])
