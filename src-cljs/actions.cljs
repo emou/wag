@@ -36,8 +36,7 @@
                         (fn [ret]
                           (log/debug "join-game returned" ret)))
   (wag.state/set-joining-game! nil)
-  (wag.state/set-played-game! game-id)
-  {:view views/play-game})
+  (play-game game-id))
 
 (defn play-game [game-id]
   (wag.state/set-played-game! game-id)

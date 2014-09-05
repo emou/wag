@@ -157,7 +157,8 @@
              (let [needed-players (wgame/players-needed game)]
                (if (> needed-players 0)
                  [:i (str "Waiting for " needed-players " more players to join ...")]
-                 [:i "Ha. game running!"]))]))))
+                 [:div
+                  [:i "Ha. game running!"]]))]))))
 
 (defn play-game [app owner]
   (reify

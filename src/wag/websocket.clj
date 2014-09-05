@@ -26,6 +26,9 @@
 (defn- user-private-channel-url [username]
   (str "user/" username))
 
+(defn- game-private-channel-url [game-id username]
+  (str "game/" game-id "/private/" username))
+
 (defn- on-user-authenticated [sess-id username]
   (state/add-user! sess-id username))
 
@@ -42,19 +45,32 @@
      :rpc       {"new-game" true
                  "join-game" true}}))
 
+;;
+;; /game/<id>/<user-id>
+;;
+;; for each player
+;;   wgame/private-state-for-player
+;;
+
+(defn send-private-game-state! [game]
+  (for [username (wgame/players game)
+        :let [player-channel (game-private-channel-url (:id game) username)]]
+    (wamp-send-event! player-channel
+                      (wgame/private-state-for-player game username))))
+
 (defn- send-reset-state! [sess-id]
   (let [username (state/username-by-session-id sess-id)]
     (wamp/send-event! (user-private-channel-url username)
                       {:type :reset-state
-                       :state {:games (state/get-all-games)
+                       :state {:games (map wgame/public-game (state/get-all-games))
                                :session-id sess-id
                                :username username}})))
 
 (defn- send-game! [game]
-  (wamp/send-event! "new-game" game))
+  (wamp/send-event! "new-game" (wgame/public-game game)))
 
 (defn- send-update-game! [game]
-  (wamp/send-event! "update-game" game))
+  (wamp/send-event! "update-game" (wgame/public-game game)))
 
 (defn- new-game []
   (let [sess-id wamp/*call-sess-id*]
@@ -69,6 +85,13 @@
         (log/info "Sending update-game!")
         (send-update-game! (@state/games-by-id game-id)) {})
       {:error "Error joining the game"})))
+
+(defn- make-turn [game-id turn]
+  (send-private-game-state!
+    (wgame/make-turn 
+      (@state/games-by-id game-id)
+      (state/username-by-session-id sess-id)
+      turn)))
 
 (defn- on-subscribe [sess-id topic]
   (log/info (state/username-by-session-id sess-id) " subscribing to " topic)
