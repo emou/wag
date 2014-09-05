@@ -59,8 +59,6 @@
 (defn send-private-game-state-for-user! [game username]
   (let [game-id (:id game)
         game-channel (user-private-game-url game-id username)]
-    (println "SENDING PGSU TO " game-channel game)
-
     (wamp/send-event! game-channel
                       {:game-id game-id
                        :private-state (wgame/private-state-for-player game username)})))
