@@ -76,7 +76,6 @@
 
       (is (= (get-in (make-guess (hint-first (tell-secret (fill-game @game)))
                                  "b-second" "cow")
-                     [:private-state]) :team-a))
-             )))
+                     [:private-state :winner]) :team-b)))))
 
 (run-tests)
