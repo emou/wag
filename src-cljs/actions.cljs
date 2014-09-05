@@ -18,7 +18,7 @@
   (wamp-client/rpc-call (wag.state/get-wamp-session)
                         ["new-game"]
                         (fn [game-id]
-                          (log/debug "new-game returned " game-id)
+                          (log/debug "new-game returned" game-id)
                           (wag.state/set-played-game! game-id)))
   {:view views/play-game})
 
@@ -26,12 +26,18 @@
   {:view views/choose-game})
 
 (defn join-game [game-id]
-  (wamp-client/rpc-call (wag.state/get-wamp-session)
-                        ["join-game" game-id]
-                        (fn [ret]
-                          (log/debug "join-game returned " ret)))
   (wag.state/set-joining-game! game-id)
   {:view views/join-game})
+
+(defn join-game-team [game-id team]
+  (log/debug "Attempting to join" game-id "/" team)
+  (wamp-client/rpc-call (wag.state/get-wamp-session)
+                        ["join-game" game-id team]
+                        (fn [ret]
+                          (log/debug "join-game returned" ret)))
+  (wag.state/set-joining-game! nil)
+  (wag.state/set-played-game! game-id)
+  {:view views/play-game})
 
 (defn play-game [game-id]
   (wag.state/set-played-game! game-id)

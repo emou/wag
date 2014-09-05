@@ -3,10 +3,11 @@
     [om.core :as om :include-macros true]
     [secretary.core :as secretary :include-macros true]
     [sablono.core :as html :refer-macros [html]]
-    [wag.routes :as routes]
-    [wag.state :as state]
+    [wag.actions :as actions]
+    [wag.game :as wgame]
     [wag.log :as log]
-    [wag.game :as wgame]))
+    [wag.routes :as routes]
+    [wag.state :as state]))
 
 (defn pluralize [word cnt]
   (if (= 1 cnt)
@@ -35,7 +36,7 @@
           :action "#"
           :class "form-signin"
           :role "form"
-          :on-submit #(wag.actions/attempt-login
+          :on-submit #(actions/attempt-login
                         (value-by-id "login-username")
                         (value-by-id "login-password"))}
 
@@ -117,19 +118,35 @@
                         [:div {:class "btn-group btn-group-xs game-buttons pull-right"}
                          [:button {:class "btn btn-default"
                                    :on-click #(routes/dispatch! (str "/join-game/" game-id))}
-                          "Join"]]]
-                       )) (vals games))]))]))))
+                          "Join"]]])) (vals games))]))]))))
+
+(defn- join-button [game team-kw]
+  (let [game-id (:id game)
+        team-name (name team-kw)]
+    [:button {:class "team-join-button btn btn-xs"
+              :on-click #(routes/dispatch! (str "/game/" game-id "/team/" team-name "/join"))}
+
+     "Join"]))
+
+(defn- player-list [heading game team-kw]
+  [:ul heading (when-not (wgame/team-full? game team-kw) (join-button game team-kw))
+   (map (fn [p]
+          [:li {:key p} p])
+        (game team-kw))])
 
 (defn join-game [app owner]
   (reify
     om/IRender
     (render [_]
       (html
-        [:div
-         (let [game-id (:joining-game-id app)
-               game ((:available-games app) game-id)]
+        (let [game-id (:joining-game-id app)
+              game ((:available-games app) game-id)]
+          [:div
            [:h4 (str "Join " game-id)]
-           [:i (str "Creator " (:creator game))])]))))
+           [:h6 (str "Created by " (:creator game))]
+           (player-list "Team A" game :team-a)
+           (player-list "Team B" game :team-b)
+           ])))))
 
 (defn game-ui [game]
   (reify

@@ -17,9 +17,11 @@
   (secretary/defroute "/choose-game" []
                       (actions/choose-game))
   (secretary/defroute "/join-game/:id" {:as params}
-                      (actions/join-game (keyword (:id params))))
+                      (actions/join-game (:id params)))
   (secretary/defroute "/play-game/:id" {:as params}
-                        (actions/play-game (keyword (:id params)))))
+                        (actions/play-game (:id params)))
+  (secretary/defroute "/game/:game-id/team/:team-name/join" {:as params}
+                      (actions/join-game-team (:game-id params) (:team-name params))))
 
 (defn dispatch! [path]
   (log/info "Dispatching " path)

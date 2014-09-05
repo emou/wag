@@ -62,13 +62,13 @@
       (send-game! game)
       (:id game))))
 
-(defn- join-game [game-id]
-  (let [res (state/add-player-to-game! game-id :team-a wamp/*call-sess-id*)]
+(defn- join-game [game-id team]
+  (let [res (state/add-player-to-game! game-id (keyword team) wamp/*call-sess-id*)]
     (if res
       (do
         (log/info "Sending update-game!")
         (send-update-game! (@state/games-by-id game-id)) {})
-      { :error "Error joining the game" })))
+      {:error "Error joining the game"})))
 
 (defn- on-subscribe [sess-id topic]
   (log/info (state/username-by-session-id sess-id) " subscribing to " topic)
