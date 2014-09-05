@@ -99,13 +99,14 @@
     (knower-mate game)))
 
 (defn- handle-tell-secret [game turn]
-  (-> game
-    (assoc-in [:private-state :next-turn]
-              {:type :hint
-               :from (knower game)})
+  (do
+    (-> game
+      (assoc-in [:private-state :next-turn]
+                {:type :hint
+                 :from (knower game)})
 
-    (assoc-in [:private-state :secret]
-              (:secret turn))))
+      (assoc-in [:private-state :secret]
+                (:secret turn)))))
 
 (defn- handle-hint [game turn]
   (assoc-in game
@@ -131,13 +132,21 @@
               {:type :hint
                :from (next-hint-from game (:from turn)) })))
 
+(defn- public-turn [turn]
+  (if (= :tell-secret (:type turn))
+    (dissoc turn :secret)
+    turn))
+
 (defn make-turn [game username turn]
   (let [expected-next-turn (get-in game [:private-state :next-turn])
-        expected-keys [:type, :from]]
+        expected-keys [:type :from]]
     (assert (.equals (select-keys turn expected-keys)
                      (select-keys expected-next-turn expected-keys)))
-    (case (:type turn)
-      :tell-secret (handle-tell-secret game turn)
-      :hint (handle-hint game turn)
-      :guess (handle-guess game turn)
-      (println "Unhandled turn  type " (:type turn)))))
+    (->
+      (:type turn)
+      (case
+        :tell-secret (handle-tell-secret game turn)
+        :hint (handle-hint game turn)
+        :guess (handle-guess game turn)
+        (assert false (str "Unhandled turn  type " (:type turn))))
+      (update-in [:private-state :turn-history] conj (public-turn turn)))))

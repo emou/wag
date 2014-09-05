@@ -5,7 +5,6 @@
 (def game (atom nil))
 
 (defn setup-game [f]
-  (println "before each")
   (reset! game (wgame/new-game "1" "a-first"))
   (f))
 
@@ -58,6 +57,10 @@
 
       (is (= (get-in (tell-secret (fill-game @game)) [:private-state :secret])
              "cow"))
+
+      (is (= (get-in (tell-secret (fill-game @game)) [:private-state :turn-history])
+             [{:type :tell-secret
+               :from "a-first"}]))
 
       (is (= (get-in (hint-first (tell-secret (fill-game @game)))
                      [:private-state :next-turn])
