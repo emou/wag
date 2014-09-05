@@ -191,10 +191,19 @@
                  " to " (teammate-display teammate my-username)
                  "...")])]))
 
-(defn turn-history [turn-history]
+(defn format-turn-history-entry [turn teammate]
+  (log/debug "turn " turn)
+  (case (:type turn)
+    "hint" (str (:from turn) " hinted " teammate " with " (:value turn))
+    "guess" (str (:from turn) " guessed " (:value turn))
+    "secret" (str (:from turn) " shared the secret with " teammate)
+    "Unkown turn"))
+
+(defn turn-history [turn-history game]
   (for [turn turn-history]
     [:div {:class "alert alert-success"
-           :role "alert"} (:type turn)]))
+           :role "alert"} 
+     (format-turn-history-entry turn (wgame/teammate game (:from turn)))]))
 
 (defn game-ui [game]
   (reify
@@ -207,11 +216,11 @@
                    winner (:winner private-state)]
                (if (> needed-players 0)
                  [:i (str "Waiting for " needed-players " more players to join ...")]
-                 (if winner
-                   [:h2 (str winner " (" (string/join " and " ((keyword winner) game)) ") won!")]
-                   [:div
-                    (next-turn-description game)
-                    (turn-history (:turn-history private-state))])))]))))
+                 [:div (if winner
+                         [:p (str winner " (" (string/join " and " ((keyword winner) game)) ") won! The word was ")
+                                   [:b (:secret private-state)]]
+                         [:div (next-turn-description game)])
+                  (turn-history (reverse (:turn-history private-state)) game)]))]))))
 
 (defn play-game [app owner]
   (reify
