@@ -68,6 +68,9 @@
 (defn players [game]
   (concat (:team-a game) (:team-b game)))
 
+(defn- winner [game]
+  (get-in game [:private-state :winner]))
+
 (defn- teller [game]
   (get-in game [:private-state :teller]))
 
@@ -80,10 +83,16 @@
 (defn- knower-mate [game]
   (get-in game [:private-state :knower-mate]))
 
-; TODO: Make this actually per-player, i.e. hide the secret from the ones that
-; need to not see it.
+(defn finished? [game]
+  (boolean (winner game)))
+
 (defn private-state-for-player [game player]
-  (:private-state game))
+  (let [private-state (:private-state game)]
+    (if (or (finished? game)
+            (= player (teller game))
+            (= player (knower game)))
+      private-state
+      (dissoc private-state :secret))))
 
 (defn public-game [game]
   (dissoc game :private-state))

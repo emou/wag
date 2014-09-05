@@ -147,8 +147,7 @@
            [:h4 (str "Join " game-id)]
            [:h6 (str "Created by " (:creator game))]
            (player-list "Team A" game :team-a)
-           (player-list "Team B" game :team-b)
-           ])))))
+           (player-list "Team B" game :team-b)])))))
 
 (defn turn-input-placeholder [turn teammate]
   (str "You need to " (:type turn) " to " teammate))
@@ -191,19 +190,19 @@
                  " to " (teammate-display teammate my-username)
                  "...")])]))
 
-(defn format-turn-history-entry [turn teammate]
+(defn format-turn-history-entry [turn game]
   (log/debug "turn " turn)
   (case (:type turn)
-    "hint" (str (:from turn) " hinted " teammate " with " (:value turn))
+    "hint" (str (:from turn) " hinted " (wgame/teammate game (:from turn)) " with " (:value turn))
     "guess" (str (:from turn) " guessed " (:value turn))
-    "secret" (str (:from turn) " shared the secret with " teammate)
+    "tell-secret" (str (get-in game [:private-state :teller]) " shared the secret with " (get-in game [:private-state :knower]))
     "Unkown turn"))
 
 (defn turn-history [turn-history game]
   (for [turn turn-history]
     [:div {:class "alert alert-success"
            :role "alert"} 
-     (format-turn-history-entry turn (wgame/teammate game (:from turn)))]))
+     (format-turn-history-entry turn game)]))
 
 (defn game-ui [game]
   (reify
@@ -213,25 +212,23 @@
              [:h5 (str "Playing game " (:id game))]
              (let [needed-players (wgame/players-needed game)
                    private-state (:private-state game)
-                   winner (:winner private-state)]
+                   winner (:winner private-state)
+                   secret (:secret private-state)]
                (if (> needed-players 0)
                  [:i (str "Waiting for " needed-players " more players to join ...")]
-                 [:div (if winner
-                         [:p (str winner " (" (string/join " and " ((keyword winner) game)) ") won! The word was ")
-                                   [:b (:secret private-state)]]
-                         [:div (next-turn-description game)])
+                 [:div 
+                  (if winner
+                    [:div {:class "alert alert-success"
+                           :role "alert"} 
+                     (str winner " (" (string/join " and " ((keyword winner) game)) ") won! The word was ")
+                     [:b (:secret private-state)] "."]
+                    [:div 
+                     (when secret [:p "The secret is " [:b secret]])
+                     (next-turn-description game)])
                   (turn-history (reverse (:turn-history private-state)) game)]))]))))
 
 (defn play-game [app owner]
   (reify
-    om/IWillMount
-    (will-mount [this]
-      (log/debug "play-game mount!!"))
-
-    om/IWillUnmount
-    (will-unmount [this]
-      (log/debug "play-game unmount!!"))
-
     om/IRender
     (render [_]
       (do
