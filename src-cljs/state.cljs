@@ -6,6 +6,16 @@
 (def app-state (atom nil))
 (def wamp-session (atom nil))
 
+(defn subscribe-to-played-game! []
+  (let [session @wamp-session
+        username (:username @app-state)
+        played-game-id (:played-game-id @app-state)]
+    (when (and session username played-game-id)
+      (.subscribe session
+                  (str "/game/" played-game-id "/" username)
+                  (fn [e t]
+                    (log/debug "got private game event " e t))))))
+
 (defn reset-state! [{:keys [username session-id games]}]
   (let [by-join (fn [game]
                   (if (wgame/joined? game username)
@@ -22,6 +32,10 @@
     (swap! app-state assoc :session-id session-id))
     (subscribe-to-played-game!)
     (log/debug "initialized state" @app-state))
+
+(defn handle-private-game-state! [event]
+  (when (= (:game-id event)
+           (:played-game-id @app-state))))
 
 (defn handle-event! [js-event]
   (let [event (keywordize-keys (js->clj js-event))
@@ -53,39 +67,8 @@
         (swap! app-state update-in [:available-games game-id] merge game))))
   (log/debug "After update-game " @app-state))
 
-(defn subscribe-to-played-game! []
-  (let [session @wamp-session
-        username (:username @app-state)
-        played-game-id (:played-game-id @app-state)]
-    (when (and session username played-game-id)
-      (.subscribe session
-                  (str "/game/" played-game-id "/" username)))))
-      ;;
-      ;;
-      ;; (.then
-      ;;   (.subscribe
-      ;;     session
-      ;;     (str "/game/" played-game-id "/" username))
-      ;;   (fn [topic, event]
-      ;;     (log/debug "played game event" event)))
-      ;;
-      ;; (fn [subscription]
-      ;;   (log/debug "Subscribed for played game" subscription)
-      ;;   (swap! app-state assoc :played-game-subscription subscription))
-      ;;
-      ;; (fn [error]
-      ;;   (log/error "error subscribing " error)))))
-
-(defn unsubscribe-to-played-game! []
-  (when-let [subscription (:played-game-subscription app-state)]
-    (log/debug "unsubscribing for played game")
-    (.then (.unsubscribe
-             subscription)
-           (fn [gone] (log/debug "Unsubscribed for played game"))
-           (fn [error] (log/debug "Error unsubscribing for played game" error)))))
-
 (defn set-wamp-session! [session]
-  (reset! wag.state/wamp-session session))
+  (reset! wamp-session session))
 
 (defn get-wamp-session []
   @wamp-session)

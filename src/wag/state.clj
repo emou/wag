@@ -35,10 +35,11 @@
   (@usernames-by-session-id sess-id))
 
 (defn add-player-to-game! [game-id team sess-id]
-  (let [result (dosync
-                 (alter games-by-id update-in [game-id]
-                        (fn [game] (wgame/add-player-to-game game team (username-by-session-id sess-id)))))]
-    result))
+  (dosync
+    (let [username (username-by-session-id sess-id)]
+      (alter games-by-id update-in [game-id]
+             (fn [game] (wgame/add-player-to-game game team username)))
+      (alter users-by-username update-in [username :game-ids] conj game-id))))
 
 (comment
   ;; repl test area

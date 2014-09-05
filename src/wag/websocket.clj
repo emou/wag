@@ -26,8 +26,8 @@
 (defn- user-private-channel-url [username]
   (str "user/" username))
 
-(defn- game-private-channel-url [game-id username]
-  (str "game/" game-id "/private/" username))
+(defn- user-private-game-url [game-id username]
+  (str "game/" game-id "/" username))
 
 (defn- on-user-authenticated [sess-id username]
   (state/add-user! sess-id username))
@@ -54,9 +54,11 @@
 
 (defn send-private-game-state! [game]
   (for [username (wgame/players game)
-        :let [player-channel (game-private-channel-url (:id game) username)]]
-    (wamp/send-event! player-channel
-                      (wgame/private-state-for-player game username))))
+        game-id (:id game)
+        :let [game-channel (user-private-game-url game-id username)]]
+    (wamp/send-event! game-channel
+                      {:game-id game-id
+                       :private-state (wgame/private-state-for-player game username)})))
 
 (defn- send-reset-state! [sess-id]
   (let [username (state/username-by-session-id sess-id)]
@@ -111,7 +113,8 @@
                         "update-game" true
                         :on-after on-subscribe}
        :on-call        {"new-game" new-game
-                        "join-game" join-game }
+                        "join-game" join-game
+                        "make-turn" make-turn}
        :on-publish     {:on-after on-publish}
        :on-auth        {:secret  auth-secret
                         :permissions auth-permissions}})))

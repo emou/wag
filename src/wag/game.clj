@@ -82,6 +82,8 @@
 (defn- knower-mate [game]
   (get-in game [:private-state :knower-mate]))
 
+; TODO: Make this actually per-player, i.e. hide the secret from the ones that
+; need to not see it.
 (defn private-state-for-player [game player]
   (:private-state game))
 

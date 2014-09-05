@@ -14,6 +14,12 @@
 (defn dashboard []
   {:view views/dashboard})
 
+(defn make-turn [game-id turn]
+  (wamp-client/rpc-call (wag.state/get-wamp-session)
+                        ["make-turn"]
+                        (fn [res]
+                          (log/debug "make-turn returned" res))))
+
 (defn new-game []
   (wamp-client/rpc-call (wag.state/get-wamp-session)
                         ["new-game"]
@@ -47,7 +53,7 @@
            (case (:type error)
              :auth "Wrong username or password. Please try again"
              "Could not connect to the server. Please try again later"))]
-    (js/alert (error-message error)
+    (log/error (error-message error)
       (routes/dispatch! "/login"))))
 
 (defn on-connection [{:keys [error, session, username]}]
