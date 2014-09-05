@@ -6,10 +6,7 @@
     [wag.routes :as routes]
     [wag.state :as state]
     [wag.log :as log]
-    [wag.game :as wgame]
-    [wag.wamp-client :as wamp-client]))
-
-(def WS_URI "ws://localhost:8080/ws")
+    [wag.game :as wgame]))
 
 (defn pluralize [word cnt]
   (if (= 1 cnt)
@@ -28,41 +25,6 @@
 (defn value-by-id [id]
   (.-value (wag.views/get-by-id id)))
 
-(defn error-message [error]
-  (case (:type error)
-    :auth "Wrong username or password. Please try again"
-    "Could not connect to the server. Please try again later"))
-
-(defn handle-error [error]
-  (js/alert (error-message error)
-            (routes/dispatch! "/login")))
-
-(defn on-connection [{:keys [error, session, username]}]
-  (if error
-    (handle-error error)
-    (do
-      (.subscribe
-        session
-        (str "user/" username)
-        (fn [topic, event]
-          (log/debug "Got private event on " topic event)
-          (state/handle-event! event)))
-
-      (.subscribe
-        session
-        "new-game"
-        (fn [topic, event]
-          (state/handle-new-game! event)))
-      
-      (state/set-wamp-session! session)
-
-      (routes/dispatch! "/dashboard"))))
-
-(defn attempt-login [username password]
-  (do
-    (println "Attempting log in as " username)
-    (wamp-client/connect WS_URI username password on-connection)))
-
 (defn login [app owner]
   (reify
     om/IRender
@@ -73,7 +35,7 @@
           :action "#"
           :class "form-signin"
           :role "form"
-          :on-submit #(attempt-login
+          :on-submit #(wag.actions/attempt-login
                         (value-by-id "login-username")
                         (value-by-id "login-password"))}
 
@@ -114,8 +76,7 @@
              [:i "You have not joined any games yet"]
              [:ul {:class "list-group"}
               (map (fn [game]
-                     (let [game-id-kw (:id game)
-                           game-id (name game-id-kw)]
+                     (let [game-id (:id game)]
                        [:li {:key game-id :class "list-group-item"}
                         [:h5 (str game-id " (" (pluralize "player" (wgame/player-count game)) ")")]
                         (str "Created by " (:creator game))
@@ -149,7 +110,7 @@
              [:i "No games available for joining"]
              [:ul {:class "list-group"}
               (map (fn [game] 
-                     (let [game-id (name (:id game))]
+                     (let [game-id (:id game)]
                        [:li {:key game-id :class "list-group-item"}
                         [:h5 (str game-id " (" (pluralize "player" (wgame/player-count game)) ")")]
                         (str "Created by " (:creator game))
@@ -165,9 +126,8 @@
     (render [_]
       (html
         [:div
-         (let [game-id-kw (:joining-game-id app)
-               game-id (name game-id-kw)
-               game ((:available-games app) game-id-kw)]
+         (let [game-id (:joining-game-id app)
+               game ((:available-games app) game-id)]
            [:h4 (str "Join " game-id)]
            [:i (str "Creator " (:creator game))])]))))
 

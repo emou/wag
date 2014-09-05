@@ -47,7 +47,8 @@
               (partial on-connect-error connection-request))))
 
 (defn rpc-call [session args callback]
-  (.apply
-    (.-call session)
-    session
-    (clj->js args)))
+  (.then
+    (.apply
+      (.-call session)
+      session
+      (clj->js args)) callback))

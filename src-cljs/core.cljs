@@ -2,7 +2,8 @@
   (:require [clojure.browser.repl]
             [wag.routes :as routes]
             [wag.views :as views]
-            [wag.log :as log])
+            [wag.log :as log]
+            [wag.actions :as actions])
   (:import [goog Uri]))
 
 (def username
@@ -16,7 +17,7 @@
     (routes/init)
     (log/debug "Application initialized")
     (routes/dispatch! "/login")
-    (views/attempt-login (or username "guest") "1") ; Auto-login. For easier testing.
+    (actions/attempt-login (or username "guest") "1") ; Auto-login. For easier testing.
     ))
 
 (comment

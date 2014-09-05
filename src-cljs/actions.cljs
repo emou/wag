@@ -3,7 +3,10 @@
             [wag.wamp-client :as wamp-client]
             [wag.core]
             [wag.log :as log]
-            [wag.state]))
+            [wag.state]
+            [wag.routes :as routes]))
+
+(def WS_URI "ws://localhost:8080/ws")
 
 (defn login []
   {:view views/login})
@@ -15,7 +18,8 @@
   (wamp-client/rpc-call (wag.state/get-wamp-session)
                         ["new-game"]
                         (fn [game-id]
-                          (wag.state/set-played-game! (keyword game-id))))
+                          (log/debug "new-game returned " game-id)
+                          (wag.state/set-played-game! game-id)))
   {:view views/play-game})
 
 (defn choose-game []
@@ -32,3 +36,43 @@
 (defn play-game [game-id]
   (wag.state/set-played-game! game-id)
   {:view views/play-game})
+
+(defn handle-error [error]
+  (letfn [(error-message [error]
+           (case (:type error)
+             :auth "Wrong username or password. Please try again"
+             "Could not connect to the server. Please try again later"))]
+    (js/alert (error-message error)
+      (routes/dispatch! "/login"))))
+
+(defn on-connection [{:keys [error, session, username]}]
+  (if error
+    (handle-error error)
+    (do
+      (.subscribe
+        session
+        (str "user/" username)
+        (fn [topic, event]
+          (log/debug "Got private event on " topic event)
+          (wag.state/handle-event! event)))
+
+      (.subscribe
+        session
+        "new-game"
+        (fn [topic, event]
+          (wag.state/handle-new-game! event)))
+
+      (.subscribe
+        session
+        "update-game"
+        (fn [topic, event]
+          (wag.state/handle-update-game! event)))
+
+      (wag.state/set-wamp-session! session)
+
+      (routes/dispatch! "/dashboard"))))
+
+(defn attempt-login [username password]
+  (do
+    (println "Attempting log in as " username)
+    (wamp-client/connect WS_URI username password on-connection)))

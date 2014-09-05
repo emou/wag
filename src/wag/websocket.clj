@@ -66,6 +66,7 @@
   (let [res (state/add-player-to-game! game-id :team-a wamp/*call-sess-id*)]
     (if res
       (do
+        (log/info "Sending update-game!")
         (send-update-game! (@state/games-by-id game-id)) {})
       { :error "Error joining the game" })))
 
