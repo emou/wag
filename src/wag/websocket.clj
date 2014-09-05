@@ -55,7 +55,7 @@
 (defn send-private-game-state! [game]
   (for [username (wgame/players game)
         :let [player-channel (game-private-channel-url (:id game) username)]]
-    (wamp-send-event! player-channel
+    (wamp/send-event! player-channel
                       (wgame/private-state-for-player game username))))
 
 (defn- send-reset-state! [sess-id]
@@ -90,7 +90,7 @@
   (send-private-game-state!
     (wgame/make-turn 
       (@state/games-by-id game-id)
-      (state/username-by-session-id sess-id)
+      (state/username-by-session-id wamp/*call-sess-id*)
       turn)))
 
 (defn- on-subscribe [sess-id topic]

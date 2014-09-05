@@ -11,7 +11,8 @@
   (secretary/defroute "/login" []
                       (actions/login))
   (secretary/defroute "/dashboard" []
-                      (actions/dashboard))
+                      (actions/play-game "b764f3c1-d368-4603-99b8-cfa037733356"))
+                      ;; (actions/dashboard))
   (secretary/defroute "/new-game" []
                       (actions/new-game))
   (secretary/defroute "/choose-game" []
@@ -26,4 +27,4 @@
 (defn dispatch! [path]
   (log/info "Dispatching " path)
   (let [{:keys [view]} (secretary/dispatch! path)]
-    (wag.state/set-screen! view)))
+    (state/set-screen! view)))

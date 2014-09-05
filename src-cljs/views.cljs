@@ -7,7 +7,8 @@
     [wag.game :as wgame]
     [wag.log :as log]
     [wag.routes :as routes]
-    [wag.state :as state]))
+    [wag.state :as state]
+    [wag.wamp-client :as wamp-client]))
 
 (defn pluralize [word cnt]
   (if (= 1 cnt)

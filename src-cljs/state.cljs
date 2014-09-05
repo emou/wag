@@ -20,6 +20,7 @@
     (swap! app-state merge grouped-games)
     (swap! app-state assoc :username username)
     (swap! app-state assoc :session-id session-id))
+    (subscribe-to-played-game!)
     (log/debug "initialized state" @app-state))
 
 (defn handle-event! [js-event]
@@ -46,11 +47,42 @@
     (if (wgame/joined? game (:username @app-state))
       (do
         (swap! app-state update-in [:joined-games game-id] merge game)
-        (swap! app-state dissoc-in [:available-games game-id]))
+        (swap! app-state update-in [:available-games] dissoc game-id))
       (do
-        (swap! app-state dissoc-in [:available-games game-id])
+        (swap! app-state update-in [:available-games game-id] dissoc game-id)
         (swap! app-state update-in [:available-games game-id] merge game))))
   (log/debug "After update-game " @app-state))
+
+(defn subscribe-to-played-game! []
+  (let [session @wamp-session
+        username (:username @app-state)
+        played-game-id (:played-game-id @app-state)]
+    (when (and session username played-game-id)
+      (.subscribe session
+                  (str "/game/" played-game-id "/" username)))))
+      ;;
+      ;;
+      ;; (.then
+      ;;   (.subscribe
+      ;;     session
+      ;;     (str "/game/" played-game-id "/" username))
+      ;;   (fn [topic, event]
+      ;;     (log/debug "played game event" event)))
+      ;;
+      ;; (fn [subscription]
+      ;;   (log/debug "Subscribed for played game" subscription)
+      ;;   (swap! app-state assoc :played-game-subscription subscription))
+      ;;
+      ;; (fn [error]
+      ;;   (log/error "error subscribing " error)))))
+
+(defn unsubscribe-to-played-game! []
+  (when-let [subscription (:played-game-subscription app-state)]
+    (log/debug "unsubscribing for played game")
+    (.then (.unsubscribe
+             subscription)
+           (fn [gone] (log/debug "Unsubscribed for played game"))
+           (fn [error] (log/debug "Error unsubscribing for played game" error)))))
 
 (defn set-wamp-session! [session]
   (reset! wag.state/wamp-session session))
@@ -59,7 +91,8 @@
   @wamp-session)
 
 (defn set-played-game! [game-id]
-  (swap! app-state assoc :played-game-id game-id))
+  (swap! app-state assoc :played-game-id game-id)
+  (subscribe-to-played-game!))
 
 (defn set-joining-game! [game-id]
   (swap! app-state assoc :joining-game-id game-id))

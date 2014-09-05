@@ -17,3 +17,9 @@
     (.-warn js/console)
     js/console
     (clj->js args)))
+
+(defn error [& args]
+  (.apply
+    (.-error js/console)
+    js/console
+    (clj->js args)))
