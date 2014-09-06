@@ -16,12 +16,6 @@
     (str cnt " " word)
     (str cnt " " word "s")))
 
-(defn header [app]
-  [:div
-   [:h1 "Word Association Game"]
-   [:p
-    [:i "A port from real life to Clojure and the web."]]])
-
 (defn get-by-id [id]
   (.getElementById js/document id))
 
@@ -62,12 +56,6 @@
 
 (defn dashboard [app owner]
   (reify
-    om/IWillMount
-    (will-mount [this]
-      (log/debug "dashboard mount!!"))
-    om/IWillUnmount
-    (will-unmount [this]
-      (log/debug "dashboard unmount!!"))
     om/IRender
     (render [_]
       (html
@@ -248,8 +236,6 @@
            (when-let [username (:username app-state)]
              [:span {:class "pull-right"} (str "Logged in as " username)])]]
          [:h1 "Word Association Game"]
-         [:p
-          [:i "A port from real life to Clojure and the web."]]
          (if-let [screen (:screen app-state)]
            (om/build screen app-state)
            nil)]))))

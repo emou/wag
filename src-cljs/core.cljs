@@ -19,8 +19,8 @@
     (routes/init)
     (log/debug "Application initialized")
     (routes/dispatch! "/login")
-    (actions/attempt-login (or username "guest") "1") ; Auto-login. For easier testing.
-    ))
+    ;; Auto-login. For easier testing.
+    (actions/attempt-login (or username "guest") "1")))
 
 (comment
   (ns wag.core)

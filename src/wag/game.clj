@@ -5,10 +5,12 @@
 (def GAME_PLAYERS 4)
 
 (defn player-count [game]
+  "Returns the number of players in the game"
   (+ (count (:team-a game))
      (count (:team-b game))))
 
 (defn game-full? [game]
+  "Checks whether the game has the needed amount of players to start"
   (= (player-count game) GAME_PLAYERS))
 
 (defn- new-private-state []
