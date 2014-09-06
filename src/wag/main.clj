@@ -15,9 +15,7 @@
   (when-not (nil? @server)
     (info "stopping server...")
     (@server) ; contains the stop-server callback fn
-    (reset! server nil)
-    ;; other cleanup stuff here ...
-    ))
+    (reset! server nil)))
 
 (defn start-server
   [& [options]]

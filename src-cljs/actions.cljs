@@ -9,12 +9,15 @@
 (def WS_URI "ws://localhost:8080/ws")
 
 (defn login []
+  "Show the login screen"
   {:view views/login})
 
 (defn dashboard []
+  "Show the home/dashboard screen"
   {:view views/dashboard})
 
 (defn make-turn [turn]
+  "Make a new turn in the game"
   (let [game-id (:played-game-id @wag.state/app-state)
         new-turn (assoc turn :from (:username @wag.state/app-state))]
     (log/debug "Making turn " new-turn " for game " game-id)
@@ -24,10 +27,12 @@
                             (log/debug "make-turn returned" res)))))
 
 (defn play-game [game-id]
+  "Start playing a game with `game-id`. It must have been previously loaded"
   (wag.state/set-played-game! game-id)
   {:view views/play-game})
 
 (defn new-game []
+  "Start a new game and show the play screen for it"
   (wamp-client/rpc-call (wag.state/get-wamp-session)
                         ["new-game"]
                         (fn [game-id]
@@ -36,13 +41,16 @@
   {:view views/play-game})
 
 (defn choose-game []
+  "Choose an existing game to join"
   {:view views/choose-game})
 
 (defn join-game [game-id]
+  "Show the screen for joining an existing game"
   (wag.state/set-joining-game! game-id)
   {:view views/join-game})
 
 (defn join-game-team [game-id team]
+  "Join a team in a game. This actually joins the game and shows its play screen"
   (log/debug "Attempting to join" game-id "/" team)
   (wamp-client/rpc-call (wag.state/get-wamp-session)
                         ["join-game" game-id team]
@@ -51,7 +59,7 @@
   (wag.state/set-joining-game! nil)
   (play-game game-id))
 
-(defn handle-error [error]
+(defn- handle-error [error]
   (letfn [(error-message [error]
            (case (:type error)
              :auth "Wrong username or password. Please try again"
@@ -59,9 +67,9 @@
     (log/error (error-message error)
       (routes/dispatch! "/login"))))
 
-(defn on-connection [{:keys [error, session, username]}]
+(defn- on-connection [{:keys [error, session, username]}]
   (if error
-    (handle-error error)
+    (handle-connectino-error error)
     (do
       (.subscribe
         session
@@ -87,6 +95,5 @@
       (routes/dispatch! "/dashboard"))))
 
 (defn attempt-login [username password]
-  (do
-    (println "Attempting log in as " username)
-    (wamp-client/connect WS_URI username password on-connection)))
+  "Attempt logging in to the WAMP server with the given username and password."
+  (wamp-client/connect WS_URI username password on-connection))

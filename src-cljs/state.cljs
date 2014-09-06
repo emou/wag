@@ -1,27 +1,38 @@
 (ns wag.state
   (:require [clojure.walk :refer [keywordize-keys]]
             [wag.log :as log]
-            [wag.game :as wgame]))
+            [wag.game :as wgame]
+            [wag.wamp-client :as wamp-client]))
 
-(def app-state (atom nil))
-(def wamp-session (atom nil))
+(def app-state
+  "The global application state"
+  (atom nil))
 
-(defn handle-private-game-state! [event]
+(def wamp-session
+  "The active WAMP session"
+  (atom nil))
+
+(defn- handle-private-game-state! [event]
+  "Handle an event with private-state of the game"
   (swap! app-state update-in [:joined-games (:game-id event)] merge
-         (select-keys event[:private-state])))
+         (select-keys event [:private-state])))
 
 (defn subscribe-to-played-game! []
+  "Subscribe to the game that is being played.
+  :played-game-id must have been set in app-state."
   (let [session @wamp-session
         username (:username @app-state)
         played-game-id (:played-game-id @app-state)]
     (when (and session username played-game-id)
-      (.subscribe session
-                  (str "game/" played-game-id "/" username)
-                  (fn [topic event]
-                    (log/debug "got private game event " topic event)
-                    (handle-private-game-state! (keywordize-keys (js->clj event))))))))
+      (wamp-client/subscribe
+        session
+        (str "game/" played-game-id "/" username)
+        (fn [topic event]
+          (log/debug "got private game event " topic event)
+          (handle-private-game-state! (keywordize-keys (js->clj event))))))))
 
-(defn reset-state! [{:keys [username session-id games]}]
+(defn handle-reset-state! [{:keys [username session-id games]}]
+  "Reset the state, i.e. list of games and initial data"
   (let [by-join (fn [game]
                   (if (wgame/joined? game username)
                     :joined-games
@@ -36,27 +47,26 @@
     (swap! app-state assoc :username username)
     (swap! app-state assoc :session-id session-id))
     (subscribe-to-played-game!)
-    (log/debug "initialized state" @app-state))
+    (log/debug "Initialized state" @app-state))
 
 (defn handle-event! [js-event]
+  "Handle an event from the local"
   (let [event (keywordize-keys (js->clj js-event))
         event-type (:type event)]
-    (log/debug "Handing private event " js-event)
+    (log/debug "Handing event " js-event)
     (case event-type
-      "reset-state" (reset-state! (:state event))
+      "reset-state" (handle-reset-state! (:state event))
       (log/info "Got unexpected event type" event-type))))
 
 (defn handle-new-game! [js-event]
-  (log/debug "Handling new game " js-event)
+  "Handle a new-game event by adding the new game to the global state"
   (let [game (keywordize-keys (js->clj js-event))
         game-id (:id game)]
     (if (wgame/joined? game (:username @app-state))
       (swap! app-state assoc-in [:joined-games game-id] game)
-      (swap! app-state assoc-in [:available-games game-id] game)))
-  (log/debug "After new-game " @app-state))
+      (swap! app-state assoc-in [:available-games game-id] game))))
 
 (defn handle-update-game! [js-event]
-  (log/debug "Handling game update " js-event)
   (let [game (keywordize-keys (js->clj js-event))
         game-id (:id game)]
     (if (wgame/joined? game (:username @app-state))
@@ -82,4 +92,5 @@
   (swap! app-state assoc :joining-game-id game-id))
 
 (defn set-screen! [screen]
+  "Set the visible screen (view)"
   (swap! app-state assoc :screen screen))

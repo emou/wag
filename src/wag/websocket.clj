@@ -8,8 +8,6 @@
             [wag.game :as wgame]
             [wag.state :as state]))
 
-;; HTTP Kit/WAMP WebSocket handler
-
 (defn- on-open [sess-id]
   (log/info "WAMP client connected [" sess-id "]"))
 
@@ -22,7 +20,6 @@
 ;; TODO: Implement database-backed authentication
 ;; Currently all users can login using the hardcoded password below.
 (defn- auth-secret [sess-id auth-key extra]
-  "Returns the auth key's secret (ie. password), typically retrieved from a database."
   "1")
 
 (defn- user-private-channel-url [username]
@@ -44,7 +41,6 @@
         user (state/get-user-by-session-id sess-id)
         username (:username user)
         game-private-url #(user-private-game-url % username)]
-
     {:subscribe (into {user-private-url true
                        "new-game" true
                        "update-game" true}
@@ -71,7 +67,7 @@
   (let [username (state/username-by-session-id sess-id)]
     (wamp/send-event! (user-private-channel-url username)
                       {:type :reset-state
-                       :state {:games (map wgame/public-game (state/get-all-games))
+                       :state {:games (map wgame/public-game (state/all-games))
                                :session-id sess-id
                                :username username}})))
 
@@ -109,6 +105,7 @@
 
   (when (.startsWith topic "user/")
     (send-reset-state! sess-id))
+
   (when (.startsWith topic "game/")
     (let [game-id (second (string/split topic #"/"))
           username (state/username-by-session-id sess-id)]

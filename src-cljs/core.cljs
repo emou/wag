@@ -7,6 +7,8 @@
   (:import [goog Uri]))
 
 (def username
+  "Read the username from the location bar. Used for auto-login for easier
+  testing."
   (->
     (new Uri (.-location js/window))
     (.getParameterValue "user")))
@@ -24,5 +26,4 @@
   (ns wag.core)
   (swap! wag.state/app-state assoc :text ":)")
   (js/alert "hm!")
-  (println "x!")
-  )
+  (println "x!"))

@@ -47,8 +47,12 @@
               (partial on-connect-error connection-request))))
 
 (defn rpc-call [session args callback]
+  "Make a WAMP rps call using session, passing args and attaching callback"
   (.then
     (.apply
       (.-call session)
       session
       (clj->js args)) callback))
+
+(defn subscribe [session topic callback]
+  (.subscribe session topic callback))

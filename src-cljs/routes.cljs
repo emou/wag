@@ -8,6 +8,7 @@
     [wag.log :as log]))
 
 (defn init []
+  "Initialize the routes"
   (secretary/defroute "/login" []
                       (actions/login))
   (secretary/defroute "/dashboard" []
@@ -24,6 +25,8 @@
                       (actions/join-game-team (:game-id params) (:team-name params))))
 
 (defn dispatch! [path]
+  "Dispatch a path triggering the associated actions and showing the
+  appropriate screen"
   (log/info "Dispatching " path)
   (let [{:keys [view]} (secretary/dispatch! path)]
     (state/set-screen! view)))

@@ -15,7 +15,7 @@
       (alter games-by-id assoc game-id game))
     game))
 
-(defn get-all-games []
+(defn all-games []
   (vals @games-by-id))
 
 (defn add-user! [sess-id username]
