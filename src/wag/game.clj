@@ -20,6 +20,8 @@
    :turn-history []})
 
 (defn new-game [id creator]
+  "Creates a new game with given id and creator, who becomes the first
+  player in :team-a"
   {:id id
    :creator creator
    :team-a #{creator}
@@ -27,8 +29,8 @@
    :private-state (new-private-state)})
 
 (defn- create-turn [turn-type from]
-  { :type turn-type 
-    :from from })
+  {:type turn-type 
+   :from from})
 
 (defn- first-turn [game]
   (create-turn 
@@ -59,6 +61,7 @@
     (initial-next-turn)))
 
 (defn add-player-to-game [game team username]
+  "Adds a player to a team in the game"
   (when (and
           (< (count (team game)) GAME_PLAYERS_PER_TEAM))
     (let [ngame
@@ -68,6 +71,7 @@
         ngame))))
 
 (defn players [game]
+  "Returns all the players in a game"
   (concat (:team-a game) (:team-b game)))
 
 (defn- winner [game]
@@ -86,9 +90,12 @@
   (get-in game [:private-state :knower-mate]))
 
 (defn finished? [game]
+  "Returns whether the games is finished"
   (boolean (winner game)))
 
 (defn private-state-for-player [game player]
+  "Returns the private-state for a player. Excludes :secret when the player
+  should not know it"
   (let [private-state (:private-state game)]
     (if (or (finished? game)
             (= player (teller game))
@@ -97,6 +104,7 @@
       (dissoc private-state :secret))))
 
 (defn public-game [game]
+  "Return a stripped-down version of the game visible for all players"
   (dissoc game :private-state))
 
 (defn- next-hint-from [game last-guess-from]
@@ -149,6 +157,9 @@
     turn))
 
 (defn make-turn [game username turn]
+  "Make the next turn in a game. The turn map must contain
+  :type :from and :value keys and the :turn-type and :from fields must
+  match the ones next-run. The game must be full when calling this."
   (let [expected-next-turn (get-in game [:private-state :next-turn])
         expected-keys [:type :from]]
     (assert (.equals (select-keys turn expected-keys)
