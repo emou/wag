@@ -85,10 +85,12 @@
   @wamp-session)
 
 (defn set-played-game! [game-id]
+  "Set the game-id of the game that is currently being played"
   (swap! app-state assoc :played-game-id game-id)
   (subscribe-to-played-game!))
 
 (defn set-joining-game! [game-id]
+  "Set the game-id that is currently being joined"
   (swap! app-state assoc :joining-game-id game-id))
 
 (defn set-screen! [screen]
