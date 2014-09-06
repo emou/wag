@@ -67,32 +67,34 @@
     (log/error (error-message error)
       (routes/dispatch! "/login"))))
 
+(defn- handle-connection-success [session username]
+  (wag.state/set-wamp-session! session)
+
+  (wamp-client/subscribe
+    session
+    (str "user/" username)
+    (fn [topic, event]
+      (log/debug "Got private event on " topic event)
+      (wag.state/handle-event! event)))
+
+  (wamp-client/subscribe
+    session
+    "new-game"
+    (fn [topic, event]
+      (wag.state/handle-new-game! event)))
+
+  (wamp-client/subscribe
+    session
+    "update-game"
+    (fn [topic, event]
+      (wag.state/handle-update-game! event)))
+
+  (routes/dispatch! "/dashboard"))
+
 (defn- on-connection [{:keys [error, session, username]}]
   (if error
-    (handle-connectino-error error)
-    (do
-      (.subscribe
-        session
-        (str "user/" username)
-        (fn [topic, event]
-          (log/debug "Got private event on " topic event)
-          (wag.state/handle-event! event)))
-
-      (.subscribe
-        session
-        "new-game"
-        (fn [topic, event]
-          (wag.state/handle-new-game! event)))
-
-      (.subscribe
-        session
-        "update-game"
-        (fn [topic, event]
-          (wag.state/handle-update-game! event)))
-
-      (wag.state/set-wamp-session! session)
-
-      (routes/dispatch! "/dashboard"))))
+    (handle-error error)
+    (handle-connection-success session username)))
 
 (defn attempt-login [username password]
   "Attempt logging in to the WAMP server with the given username and password."

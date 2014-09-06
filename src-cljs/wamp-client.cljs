@@ -54,4 +54,5 @@
       (clj->js args)) callback))
 
 (defn subscribe [session topic callback]
+  "Subscribe to the given topic and call the given callback on messages"
   (.subscribe session topic callback))
