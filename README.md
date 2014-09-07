@@ -1,8 +1,13 @@
 # Word Association Game
 
+    Uses websocket messages/rpc calls. Only the initial html is served through an HTTP request.
+    NOTE: Generally, it's my first excersise in Clojure coded in a few days and has many bugs and unsolved problems.
+
 This is a word association game that runs in the browser.
 
 ## General flow
+
+    NOTE: This was simply the preliminary idea/description for the game.
 
 1. User opens the application. He's prompted for his name.
 
